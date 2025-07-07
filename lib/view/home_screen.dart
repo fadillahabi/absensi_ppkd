@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:ppkd_flutter/constant/app_color.dart';
 
-class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
-  static const String id = "/main_screen";
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+  static const String id = "/home_screen";
 
   @override
-  State<MainScreen> createState() => _MainScreenState();
+  State<HomeScreen> createState() => _MainScreenState();
 }
 
-class _MainScreenState extends State<MainScreen> {
+class _MainScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColor.purpleMain,
+      bottomNavigationBar: _buildBottomNavBar(),
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -196,6 +197,114 @@ Widget _buildHistoryCard(
   return Container(
     color: Colors.white,
     padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-    child: Container(),
+    child: Container(
+      padding: EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Color(0xFFEDEBFA),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  date,
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                Text(day, style: TextStyle(fontSize: 12)),
+              ],
+            ),
+          ),
+          SizedBox(width: 16),
+          Expanded(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                Column(
+                  children: [
+                    Text("Check In", style: TextStyle(fontSize: 12)),
+                    Text(
+                      checkIn,
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+                Column(
+                  children: [
+                    Text("Check Out", style: TextStyle(fontSize: 12)),
+                    Text(
+                      checkOut,
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+Widget _buildBottomNavBar() {
+  return SafeArea(
+    child: Container(
+      decoration: BoxDecoration(
+        color: AppColor.purpleMain, // Warna dominan ungu
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(24),
+          topRight: Radius.circular(24),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black26,
+            blurRadius: 8,
+            offset: Offset(0, -2),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(24),
+          topRight: Radius.circular(24),
+        ),
+        child: BottomNavigationBar(
+          backgroundColor: AppColor.purpleMain,
+          selectedItemColor: Colors.white,
+          unselectedItemColor: Colors.white60,
+          showSelectedLabels: true,
+          showUnselectedLabels: true,
+          type: BottomNavigationBarType.fixed,
+          elevation: 0,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home_outlined),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.map_outlined),
+              label: 'Map',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.access_time_outlined),
+              label: 'History',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person_outline),
+              label: 'Profile',
+            ),
+          ],
+        ),
+      ),
+    ),
   );
 }
