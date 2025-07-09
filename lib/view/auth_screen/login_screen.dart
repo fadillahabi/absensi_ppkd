@@ -1,7 +1,10 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:ppkd_flutter/constant/app_color.dart';
-import 'package:ppkd_flutter/view/register_screen.dart';
+import 'package:ppkd_flutter/helper/shared_preference.dart';
+import 'package:ppkd_flutter/sevices/auth_api.dart';
+import 'package:ppkd_flutter/view/auth_screen/register_screen.dart';
+import 'package:ppkd_flutter/view/home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -15,7 +18,15 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  bool _obscureText = true;
+  bool _isVisiblePassword = true;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -31,6 +42,7 @@ class _LoginScreenState extends State<LoginScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 128),
         child: SingleChildScrollView(
           child: Form(
+            key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -88,7 +100,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 // Password
                 TextFormField(
                   controller: _passwordController,
-                  obscureText: _obscureText,
+                  obscureText: _isVisiblePassword,
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: Colors.white,
@@ -96,11 +108,13 @@ class _LoginScreenState extends State<LoginScreen> {
                     prefixIcon: const Icon(Icons.lock_outline),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _obscureText ? Icons.visibility_off : Icons.visibility,
+                        _isVisiblePassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
                       ),
                       onPressed: () {
                         setState(() {
-                          _obscureText = !_obscureText;
+                          _isVisiblePassword = !_isVisiblePassword;
                         });
                       },
                     ),
@@ -141,7 +155,34 @@ class _LoginScreenState extends State<LoginScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    onPressed: () {},
+                    onPressed: () async {
+                      if (_formKey.currentState!.validate()) {
+                        try {
+                          final user = await UserApi.loginUser(
+                            email: _emailController.text.trim(),
+                            password: _passwordController.text.trim(),
+                          );
+
+                          // Simpan sesi login
+                          await PreferencesOTI.saveLoginSession();
+
+                          if (!mounted) return;
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const HomeScreen(),
+                            ),
+                          );
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Login gagal: ${e.toString()}'),
+                            ),
+                          );
+                        }
+                      }
+                    },
+
                     child: const Text(
                       'Masuk',
                       style: TextStyle(

@@ -1,60 +1,37 @@
-import 'dart:convert';
-
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../models/user_model.dart';
+class PreferencesOTI {
+  static const String _keyToken = 'token';
+  static const String _keyIsLoggedIn = 'is_logged_in';
 
-class PreferenceHandlerAbsensi {
-  static const String _loginKey = "login";
-  static const String _tokenKey = "token";
-  static const String _userIdKey = "user_id";
-  static const String _userDataKey = "user_data";
-
-  static Future<void> saveLogin(bool login) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_loginKey, login);
-  }
-
-  static Future<bool> getLogin() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(_loginKey) ?? false;
-  }
-
+  /// Save token to shared preferences
   static Future<void> saveToken(String token) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_tokenKey, token);
+    await prefs.setString(_keyToken, token);
   }
 
+  /// Get token from shared preferences
   static Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_tokenKey);
+    return prefs.getString(_keyToken);
   }
 
-  static Future<void> saveUserId(int userId) async {
+  /// Save login session (set is_logged_in to true)
+  static Future<void> saveLoginSession() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(_userIdKey, userId);
+    await prefs.setBool(_keyIsLoggedIn, true);
   }
 
-  static Future<int?> getUserId() async {
+  /// Check if user is logged in
+  static Future<bool> isLoggedIn() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getInt(_userIdKey);
+    return prefs.getBool(_keyIsLoggedIn) ?? false;
   }
 
-  static Future<void> saveUserData(UserModel user) async {
+  /// Clear token and login session (logout)
+  static Future<void> clearSession() async {
     final prefs = await SharedPreferences.getInstance();
-    String userJson = jsonEncode(user.toJson());
-    await prefs.setString(_userDataKey, userJson);
-  }
-
-  static Future<UserModel?> getUserData() async {
-    final prefs = await SharedPreferences.getInstance();
-    String? userJson = prefs.getString(_userDataKey);
-    if (userJson == null) return null;
-    return UserModel.fromJson(jsonDecode(userJson));
-  }
-
-  static Future<void> deleteLogin() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
+    await prefs.remove(_keyToken);
+    await prefs.remove(_keyIsLoggedIn);
   }
 }

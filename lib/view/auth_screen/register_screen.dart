@@ -3,10 +3,11 @@ import 'dart:convert';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:ppkd_flutter/api/user_api.dart';
 import 'package:ppkd_flutter/constant/app_color.dart';
-import 'package:ppkd_flutter/models/batch_training_model.dart' as model;
-import 'package:ppkd_flutter/view/login_screen.dart';
+import 'package:ppkd_flutter/models/bathes_models.dart';
+import 'package:ppkd_flutter/models/trainings_model.dart';
+import 'package:ppkd_flutter/sevices/auth_api.dart';
+import 'package:ppkd_flutter/view/auth_screen/login_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -28,8 +29,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  List<model.Batch> _batchOptions = [];
-  List<model.Training> _trainingOptions = [];
+  List<BatchesData> _batchOptions = [];
+  List<DataTrainings> _trainingOptions = [];
 
   Future<void> _pickImage() async {
     final pickedFile = await ImagePicker().pickImage(
@@ -52,8 +53,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         email.isEmpty ||
         password.isEmpty ||
         batchId == null ||
-        trainingId == null ||
-        profilePhotoBase64 == null) {
+        trainingId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Mohon lengkapi semua data")),
       );
@@ -62,19 +62,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     setState(() => _isLoading = true);
 
-    final result = await UserApi.registerUser(
-      name: name,
-      email: email,
-      password: password,
-      jenisKelamin: selectedGender ?? 'L',
-      profilePhoto: profilePhotoBase64!,
-      batchId: batchId!,
-      trainingId: trainingId!,
-    );
+    try {
+      final result = await UserApi.registerUser(
+        name: name,
+        email: email,
+        password: password,
+        jenisKelamin: selectedGender ?? 'L',
+        profilePhoto: profilePhotoBase64 ?? "", // opsional
+        batchId: batchId!,
+        trainingId: trainingId!,
+      );
 
-    setState(() => _isLoading = false);
+      if (!mounted) return;
 
-    if (result == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Registrasi berhasil! Silakan login."),
@@ -83,13 +83,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
       );
 
-      await Future.delayed(const Duration(seconds: 2));
-      if (!mounted) return;
-
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const LoginScreen()),
       );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Gagal registrasi: $e"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -130,7 +139,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
         child: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -154,7 +163,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
                 Form(
                   child: Column(
                     children: [
@@ -187,7 +196,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ),
                             const SizedBox(height: 12),
                             const Text(
-                              "Tap foto untuk unggah",
+                              "Tap foto untuk unggah (opsional)",
                               style: TextStyle(color: Colors.white70),
                             ),
                           ],
@@ -387,9 +396,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
       items:
           _batchOptions
               .map(
-                (model.Batch batch) => DropdownMenuItem<int>(
+                (BatchesData batch) => DropdownMenuItem<int>(
                   value: batch.id,
-                  child: Text(batch.name),
+                  child: Text(batch.batchKe),
                 ),
               )
               .toList(),
@@ -410,9 +419,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
       items:
           _trainingOptions
               .map(
-                (model.Training training) => DropdownMenuItem<int>(
+                (DataTrainings training) => DropdownMenuItem<int>(
                   value: training.id,
-                  child: Text(training.name),
+                  child: Text(training.title),
                 ),
               )
               .toList(),

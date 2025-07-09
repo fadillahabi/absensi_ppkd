@@ -6,201 +6,274 @@ class HomeScreen extends StatefulWidget {
   static const String id = "/home_screen";
 
   @override
-  State<HomeScreen> createState() => _MainScreenState();
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _MainScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColor.purpleMain,
-      bottomNavigationBar: _buildBottomNavBar(),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(top: 60, left: 20, right: 20),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: (32),
-                    backgroundColor: Colors.white,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(50),
-                      child: Image.asset("assets/images/student.png"),
-                    ),
-                  ),
-                  SizedBox(width: 16),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Selamat Pagi",
-                        style: TextStyle(color: Colors.white),
-                      ),
-                      Text(
-                        "Muhammad Rio Akbar",
-                        style: TextStyle(color: Colors.white),
-                      ),
-                      Text("123456789", style: TextStyle(color: Colors.white)),
-                    ],
-                  ),
-                ],
+
+      body: Stack(
+        children: [
+          // Background putih dengan lengkungan
+          Positioned(
+            top: 280,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                // borderRadius: BorderRadius.only(
+                //   topLeft: Radius.circular(36),
+                //   topRight: Radius.circular(36),
+                // ),
               ),
             ),
-            SizedBox(height: 20),
-            Container(
-              margin: EdgeInsets.symmetric(horizontal: 16),
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: ListTile(
-                leading: Icon(
-                  Icons.calendar_today,
-                  color: AppColor.purpleSecond,
-                ),
-                title: Text("Take attendance today"),
-                trailing: Icon(Icons.access_time, color: AppColor.purpleSecond),
-                onTap: () {},
-              ),
-            ),
-            SizedBox(height: 20),
-            Container(
-              margin: EdgeInsets.symmetric(horizontal: 20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 8,
-                    offset: Offset(0, 2),
-                  ),
-                ],
-              ),
-              padding: EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+          ),
+
+          // Konten utama
+          SingleChildScrollView(
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(top: 60, left: 20, right: 20),
+                  child: Row(
                     children: [
-                      Icon(
-                        Icons.location_on,
-                        size: 20,
-                        color: AppColor.purpleMain,
-                      ),
-                      SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          "Jl. Panglima Djuminang No.5, Medan Petisah, Sumatera Utara",
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: AppColor.purpleMain,
+                      const CircleAvatar(
+                        radius: 32,
+                        backgroundColor: Colors.white,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.all(Radius.circular(50)),
+                          child: Image(
+                            image: AssetImage("assets/images/student.png"),
                           ),
                         ),
                       ),
-                    ],
-                  ),
-                  SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _buildTimeBox("Check In", "07 : 50 : 00"),
-                      _buildTimeBox(
-                        "Check Out",
-                        "17 : 50 : 00",
-                        showButton: true,
+                      const SizedBox(width: 16),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          Text(
+                            "Selamat Pagi",
+                            style: TextStyle(color: Colors.white),
+                          ),
+                          Text(
+                            "Muhammad Rio Akbar",
+                            style: TextStyle(color: Colors.white),
+                          ),
+                          Text(
+                            "123456789",
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
+                ),
+                const SizedBox(height: 20),
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 4,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: ListTile(
+                    leading: Icon(
+                      Icons.calendar_today,
+                      color: AppColor.purpleSecond,
+                    ),
+                    title: const Text(
+                      "Take attendance today",
+                      style: TextStyle(color: AppColor.purpleMain),
+                    ),
+                    trailing: Icon(
+                      Icons.access_time,
+                      color: AppColor.purpleSecond,
+                    ),
+                    onTap: () {},
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 20),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 8,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.location_on,
+                            size: 20,
+                            color: AppColor.purpleMain,
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              "Jl. Panglima Djuminang No.5, Medan Petisah, Sumatera Utara",
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppColor.purpleMain,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _buildTimeBox("Check In", "07 : 50 : 00"),
+                          _buildTimeBox(
+                            "Check Out",
+                            "17 : 50 : 00",
+                            showButton: true,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      "Riwayat Kehadiran",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: AppColor.purpleMain,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                _buildHistoryCard(
+                  "13",
+                  "Monday",
+                  "07 : 50 : 00",
+                  "17 : 50 : 00",
+                ),
+                _buildHistoryCard(
+                  "12",
+                  "Friday",
+                  "08 : 00 : 00",
+                  "17 : 00 : 00",
+                ),
+                _buildHistoryCard(
+                  "12",
+                  "Friday",
+                  "08 : 00 : 00",
+                  "17 : 00 : 00",
+                ),
+                _buildHistoryCard(
+                  "12",
+                  "Friday",
+                  "08 : 00 : 00",
+                  "17 : 00 : 00",
+                ),
+                _buildHistoryCard(
+                  "12",
+                  "Friday",
+                  "08 : 00 : 00",
+                  "17 : 00 : 00",
+                ),
+                const SizedBox(height: 80),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTimeBox(String label, String time, {bool showButton = false}) {
+    return Expanded(
+      child: Container(
+        height: 140,
+        margin: const EdgeInsets.symmetric(horizontal: 2),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFEDEBFA),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                color: AppColor.purpleMain,
+                fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 20),
-            Container(
-              width: double.infinity,
-              color: Colors.white,
-              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              child: Text(
-                "Riwayat Kehadiran",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
+            const SizedBox(height: 8),
+            Text(
+              time,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: AppColor.purpleMain,
+              ),
+            ),
+            const SizedBox(height: 16),
+            if (showButton)
+              Container(
+                margin: const EdgeInsets.only(top: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
                   color: AppColor.purpleMain,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Text(
+                  "Check Out",
+                  style: TextStyle(color: Colors.white),
                 ),
               ),
-            ),
-            _buildHistoryCard("13", "Monday", "07 : 50 : 00", "17 : 50 : 00"),
-            _buildHistoryCard("13", "Monday", "07 : 50 : 00", "17 : 50 : 00"),
-
-            SizedBox(height: 80),
           ],
         ),
       ),
     );
   }
-}
 
-Widget _buildTimeBox(String label, String time, {bool showButton = false}) {
-  return Expanded(
-    child: Container(
-      height: 140,
-      margin: EdgeInsets.symmetric(horizontal: 2),
-      padding: EdgeInsets.all(12),
+  Widget _buildHistoryCard(
+    String date,
+    String day,
+    String checkIn,
+    String checkOut,
+  ) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Color(0xFFEDEBFA),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              color: AppColor.purpleMain,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          SizedBox(height: 8),
-          Text(
-            time,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: AppColor.purpleMain,
-            ),
-          ),
-          SizedBox(height: 16),
-          if (showButton)
-            Container(
-              margin: EdgeInsets.only(top: 8),
-              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: AppColor.purpleMain,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text("Check Out", style: TextStyle(color: Colors.white)),
-            ),
-        ],
-      ),
-    ),
-  );
-}
-
-Widget _buildHistoryCard(
-  String date,
-  String day,
-  String checkIn,
-  String checkOut,
-) {
-  return Container(
-    color: Colors.white,
-    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-    child: Container(
-      padding: EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Color(0xFFEDEBFA),
+        color: const Color(0xFFEDEBFA),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
@@ -217,32 +290,35 @@ Widget _buildHistoryCard(
               children: [
                 Text(
                   date,
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-                Text(day, style: TextStyle(fontSize: 12)),
+                Text(day, style: const TextStyle(fontSize: 12)),
               ],
             ),
           ),
-          SizedBox(width: 16),
+          const SizedBox(width: 16),
           Expanded(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 Column(
                   children: [
-                    Text("Check In", style: TextStyle(fontSize: 12)),
+                    const Text("Check In", style: TextStyle(fontSize: 12)),
                     Text(
                       checkIn,
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),
                 Column(
                   children: [
-                    Text("Check Out", style: TextStyle(fontSize: 12)),
+                    const Text("Check Out", style: TextStyle(fontSize: 12)),
                     Text(
                       checkOut,
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),
@@ -251,60 +327,6 @@ Widget _buildHistoryCard(
           ),
         ],
       ),
-    ),
-  );
-}
-
-Widget _buildBottomNavBar() {
-  return SafeArea(
-    child: Container(
-      decoration: BoxDecoration(
-        color: AppColor.purpleMain, // Warna dominan ungu
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(24),
-          topRight: Radius.circular(24),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 8,
-            offset: Offset(0, -2),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(24),
-          topRight: Radius.circular(24),
-        ),
-        child: BottomNavigationBar(
-          backgroundColor: AppColor.purpleMain,
-          selectedItemColor: Colors.white,
-          unselectedItemColor: Colors.white60,
-          showSelectedLabels: true,
-          showUnselectedLabels: true,
-          type: BottomNavigationBarType.fixed,
-          elevation: 0,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined),
-              label: 'Home',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.map_outlined),
-              label: 'Map',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.access_time_outlined),
-              label: 'History',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline),
-              label: 'Profile',
-            ),
-          ],
-        ),
-      ),
-    ),
-  );
+    );
+  }
 }

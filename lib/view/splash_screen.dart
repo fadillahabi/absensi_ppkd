@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ppkd_flutter/helper/shared_preference.dart';
+import 'package:ppkd_flutter/view/auth_screen/login_screen.dart';
 import 'package:ppkd_flutter/view/home_screen.dart';
-import 'package:ppkd_flutter/view/login_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -35,7 +35,7 @@ class _SplashScreenState extends State<SplashScreen>
   Future<void> changePage() async {
     await Future.delayed(const Duration(seconds: 3)); // waktu tunggu splash
 
-    final token = await PreferenceHandlerAbsensi.getToken();
+    final token = await PreferencesOTI.getToken();
 
     if (token != null && token.isNotEmpty) {
       // Jika token tersedia, langsung ke HomeScreen
