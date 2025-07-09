@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ppkd_flutter/helper/shared_preference.dart';
 import 'package:ppkd_flutter/view/auth_screen/login_screen.dart';
-import 'package:ppkd_flutter/view/home_screen.dart';
+import 'package:ppkd_flutter/widgets/buttom_navbar.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -33,19 +33,19 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> changePage() async {
-    await Future.delayed(const Duration(seconds: 3)); // waktu tunggu splash
+    await Future.delayed(const Duration(seconds: 3));
 
     final token = await PreferencesOTI.getToken();
 
     if (token != null && token.isNotEmpty) {
-      // Jika token tersedia, langsung ke HomeScreen
+      // ✅ Ganti ke BottomNav dengan index 0 (Home)
       Navigator.pushNamedAndRemoveUntil(
         context,
-        HomeScreen.id,
+        CustomButtonNavBar.id,
         (route) => false,
+        arguments: 0,
       );
     } else {
-      // Jika belum login, arahkan ke LoginScreen
       Navigator.pushNamedAndRemoveUntil(
         context,
         LoginScreen.id,

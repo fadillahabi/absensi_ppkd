@@ -3,10 +3,6 @@ import 'package:ppkd_flutter/constant/app_color.dart';
 import 'package:ppkd_flutter/view/auth_screen/login_screen.dart';
 import 'package:ppkd_flutter/view/auth_screen/register_screen.dart';
 import 'package:ppkd_flutter/view/edit_profile_screen.dart';
-import 'package:ppkd_flutter/view/history_screen.dart';
-import 'package:ppkd_flutter/view/home_screen.dart';
-import 'package:ppkd_flutter/view/map_screen.dart';
-import 'package:ppkd_flutter/view/profile_screen.dart';
 import 'package:ppkd_flutter/view/splash_screen.dart';
 import 'package:ppkd_flutter/widgets/buttom_navbar.dart';
 
@@ -23,16 +19,20 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       initialRoute: "/",
       routes: {
-        '/': (context) => SplashScreen(),
-        LoginScreen.id: (context) => LoginScreen(),
-        HomeScreen.id: (context) => HomeScreen(),
-        RegisterScreen.id: (context) => RegisterScreen(),
-        MapScreen.id: (context) => MapScreen(),
-        HistoryScreen.id: (context) => HistoryScreen(),
-        ProfileScreen.id: (context) => ProfileScreen(),
-        EditProfileScreen.id: (context) => EditProfileScreen(),
-        CustomButtonNavBar.id:
-            (context) => const CustomButtonNavBar(currentIndex: 0),
+        '/': (context) => const SplashScreen(),
+        LoginScreen.id: (context) => const LoginScreen(),
+        RegisterScreen.id: (context) => const RegisterScreen(),
+        EditProfileScreen.id: (context) => const EditProfileScreen(),
+        // Jangan daftarkan lagi HomeScreen, MapScreen, dll jika pakai dari BottomNav
+      },
+      onGenerateRoute: (settings) {
+        if (settings.name == CustomButtonNavBar.id) {
+          final index = settings.arguments as int? ?? 0;
+          return MaterialPageRoute(
+            builder: (_) => CustomButtonNavBar(currentIndex: index),
+          );
+        }
+        return null;
       },
       title: 'OneTapIn',
       theme: ThemeData(
@@ -40,7 +40,6 @@ class MyApp extends StatelessWidget {
         scaffoldBackgroundColor: Colors.white,
         colorScheme: ColorScheme.fromSeed(seedColor: AppColor.purpleMain),
       ),
-      // home: const MyHomePage(title: 'Flutter Demo Home Page'),
     );
   }
 }
