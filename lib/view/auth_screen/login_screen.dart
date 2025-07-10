@@ -4,7 +4,10 @@ import 'package:ppkd_flutter/constant/app_color.dart';
 import 'package:ppkd_flutter/helper/shared_preference.dart';
 import 'package:ppkd_flutter/sevices/auth_api.dart';
 import 'package:ppkd_flutter/view/auth_screen/register_screen.dart';
-import 'package:ppkd_flutter/view/home_screen.dart';
+import 'package:ppkd_flutter/widgets/buttom_navbar.dart';
+import 'package:ppkd_flutter/widgets/custom_input_field.dart';
+import 'package:ppkd_flutter/widgets/custom_password_field.dart';
+import 'package:ppkd_flutter/widgets/main_button.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -18,7 +21,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  bool _isVisiblePassword = true;
+  final bool _isVisiblePassword = true;
 
   @override
   void dispose() {
@@ -72,24 +75,15 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 40),
 
-                // Email
-                TextFormField(
+                CustomInputField(
+                  hintText: 'Email',
+                  icon: Icons.email_outlined,
                   controller: _emailController,
-                  style: const TextStyle(fontFamily: 'Poppins'),
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Colors.white,
-                    hintText: 'Email',
-                    prefixIcon: const Icon(Icons.email_outlined),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Email tidak boleh kosong';
                     }
-                    if (!value.contains('@')) {
+                    if (!value.contains('@') || !value.contains('.')) {
                       return 'Format email tidak valid';
                     }
                     return null;
@@ -97,42 +91,20 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Password
-                TextFormField(
+                CustomPasswordField(
                   controller: _passwordController,
-                  obscureText: _isVisiblePassword,
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Colors.white,
-                    hintText: 'Password',
-                    prefixIcon: const Icon(Icons.lock_outline),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _isVisiblePassword
-                            ? Icons.visibility_off
-                            : Icons.visibility,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _isVisiblePassword = !_isVisiblePassword;
-                        });
-                      },
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Password tidak boleh kosong';
                     }
                     if (value.length < 6) {
-                      return 'Minimal 6 karakter';
+                      return 'Password minimal 6 karakter';
                     }
                     return null;
                   },
                 ),
                 const SizedBox(height: 8),
+
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
@@ -144,59 +116,37 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
 
-                // Tombol Masuk
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColor.purpleMain,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    onPressed: () async {
-                      if (_formKey.currentState!.validate()) {
-                        try {
-                          final user = await UserApi.loginUser(
-                            email: _emailController.text.trim(),
-                            password: _passwordController.text.trim(),
-                          );
+                MainButton(
+                  text: 'Masuk',
+                  onPressed: () async {
+                    if (_formKey.currentState!.validate()) {
+                      try {
+                        final user = await UserApi.loginUser(
+                          email: _emailController.text.trim(),
+                          password: _passwordController.text.trim(),
+                        );
 
-                          // Simpan sesi login
-                          await PreferencesOTI.saveLoginSession();
+                        await PreferencesOTI.saveLoginSession();
 
-                          if (!mounted) return;
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const HomeScreen(),
-                            ),
-                          );
-                        } catch (e) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Login gagal: ${e.toString()}'),
-                            ),
-                          );
-                        }
+                        if (!mounted) return;
+                        Navigator.pushReplacementNamed(
+                          context,
+                          CustomButtonNavBar.id,
+                          arguments: 0, // index halaman Home
+                        );
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Login gagal: ${e.toString()}'),
+                          ),
+                        );
                       }
-                    },
-
-                    child: const Text(
-                      'Masuk',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
+                    }
+                  },
+                  backgroundColor: AppColor.purpleMain,
                 ),
 
                 const SizedBox(height: 20),
-
-                // Garis atau
                 Row(
                   children: [
                     Expanded(child: Divider(color: Colors.white24)),
@@ -210,10 +160,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     Expanded(child: Divider(color: Colors.white24)),
                   ],
                 ),
-
                 const SizedBox(height: 16),
 
-                // Google
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton.icon(
@@ -235,7 +183,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 12),
 
-                // Facebook
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton.icon(

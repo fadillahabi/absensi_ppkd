@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:ppkd_flutter/api/endpoint.dart';
-import 'package:ppkd_flutter/models/bathes_models.dart';
+import 'package:ppkd_flutter/models/bathes_model.dart';
 
 class BatchesServices {
   static Map<String, String> getHeaders() {

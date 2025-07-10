@@ -39,6 +39,7 @@ class UserLogin {
   final int? id;
   final String? name;
   final String? email;
+  final String? jenisKelamin;
   final dynamic emailVerifiedAt;
   final DateTime? createdAt;
   final DateTime? updatedAt;
@@ -47,6 +48,7 @@ class UserLogin {
     this.id,
     this.name,
     this.email,
+    this.jenisKelamin,
     this.emailVerifiedAt,
     this.createdAt,
     this.updatedAt,
@@ -56,6 +58,7 @@ class UserLogin {
     id: json["id"],
     name: json["name"],
     email: json["email"],
+    jenisKelamin: json["jenis_kelamin"],
     emailVerifiedAt: json["email_verified_at"],
     createdAt:
         json["created_at"] != null ? DateTime.parse(json["created_at"]) : null,
@@ -67,6 +70,7 @@ class UserLogin {
     "id": id,
     "name": name,
     "email": email,
+    "jenis_kelamin": jenisKelamin,
     "email_verified_at": emailVerifiedAt,
     "created_at": createdAt?.toIso8601String(),
     "updated_at": updatedAt?.toIso8601String(),

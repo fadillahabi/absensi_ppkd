@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:ppkd_flutter/constant/app_color.dart';
 import 'package:ppkd_flutter/view/history_screen.dart';
 import 'package:ppkd_flutter/view/home_screen.dart';
-import 'package:ppkd_flutter/view/map_screen.dart';
 import 'package:ppkd_flutter/view/profile_screen.dart';
 
 class CustomButtonNavBar extends StatefulWidget {
@@ -19,7 +18,6 @@ class _CustomButtonNavBarState extends State<CustomButtonNavBar> {
 
   final List<Widget> _pages = const [
     HomeScreen(),
-    MapScreen(),
     HistoryScreen(),
     ProfileScreen(),
   ];
@@ -54,7 +52,6 @@ class _CustomButtonNavBarState extends State<CustomButtonNavBar> {
             icon: Icon(Icons.home_outlined),
             label: 'Home',
           ),
-          BottomNavigationBarItem(icon: Icon(Icons.map_outlined), label: 'Map'),
           BottomNavigationBarItem(
             icon: Icon(Icons.access_time_outlined),
             label: 'History',

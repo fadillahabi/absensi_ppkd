@@ -4,10 +4,15 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:ppkd_flutter/constant/app_color.dart';
-import 'package:ppkd_flutter/models/bathes_models.dart';
+import 'package:ppkd_flutter/models/bathes_model.dart';
 import 'package:ppkd_flutter/models/trainings_model.dart';
 import 'package:ppkd_flutter/sevices/auth_api.dart';
 import 'package:ppkd_flutter/view/auth_screen/login_screen.dart';
+import 'package:ppkd_flutter/widgets/batch_dropdown.dart';
+import 'package:ppkd_flutter/widgets/custom_input_field.dart';
+import 'package:ppkd_flutter/widgets/custom_password_field.dart';
+import 'package:ppkd_flutter/widgets/gender_selector.dart';
+import 'package:ppkd_flutter/widgets/training_dropdown.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -18,11 +23,12 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
+  final _formKey = GlobalKey<FormState>();
+
   String? selectedGender = 'L';
   int? batchId;
   int? trainingId;
   String? profilePhotoBase64;
-  bool _obscureText = true;
   bool _isLoading = false;
 
   final TextEditingController _nameController = TextEditingController();
@@ -31,6 +37,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   List<BatchesData> _batchOptions = [];
   List<DataTrainings> _trainingOptions = [];
+
+  @override
+  void initState() {
+    super.initState();
+    fetchBatchAndTraining();
+  }
+
+  Future<void> fetchBatchAndTraining() async {
+    try {
+      final batches = await UserApi.getBatches();
+      final trainings = await UserApi.getTrainings();
+      setState(() {
+        _batchOptions = batches;
+        _trainingOptions = trainings;
+      });
+    } catch (_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Gagal memuat data batch/training')),
+      );
+    }
+  }
 
   Future<void> _pickImage() async {
     final pickedFile = await ImagePicker().pickImage(
@@ -49,43 +76,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
-    if (name.isEmpty ||
-        email.isEmpty ||
-        password.isEmpty ||
-        batchId == null ||
-        trainingId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Mohon lengkapi semua data")),
-      );
-      return;
-    }
-
     setState(() => _isLoading = true);
 
     try {
-      final result = await UserApi.registerUser(
+      await UserApi.registerUser(
         name: name,
         email: email,
         password: password,
         jenisKelamin: selectedGender ?? 'L',
-        profilePhoto: profilePhotoBase64 ?? "", // opsional
+        profilePhoto: profilePhotoBase64 ?? "",
         batchId: batchId!,
         trainingId: trainingId!,
       );
 
       if (!mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Registrasi berhasil! Silakan login."),
           backgroundColor: Colors.green,
-          duration: Duration(seconds: 2),
         ),
       );
-
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
       );
     } catch (e) {
       if (!mounted) return;
@@ -96,32 +109,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
       );
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    fetchBatchAndTraining();
-  }
-
-  Future<void> fetchBatchAndTraining() async {
-    try {
-      final batches = await UserApi.getBatches();
-      final trainings = await UserApi.getTrainings();
-
-      setState(() {
-        _batchOptions = batches;
-        _trainingOptions = trainings;
-      });
-    } catch (e) {
-      print("Gagal ambil data batch/training: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Gagal memuat data batch/training')),
-      );
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -138,156 +126,182 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
         ),
         child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+          child: Form(
+            key: _formKey,
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 40),
-                Center(
-                  child: Column(
-                    children: const [
-                      Text(
-                        "Register",
-                        style: TextStyle(
-                          fontSize: 36,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
+                const Text(
+                  "Register",
+                  style: TextStyle(
+                    fontSize: 36,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  "Create an account",
+                  style: TextStyle(fontSize: 16, color: Colors.white70),
+                ),
+                const SizedBox(height: 24),
+
+                // Photo Upload
+                GestureDetector(
+                  onTap: _pickImage,
+                  child: CircleAvatar(
+                    radius: 50,
+                    backgroundColor: Colors.grey.shade300,
+                    backgroundImage:
+                        profilePhotoBase64 != null
+                            ? MemoryImage(
+                              base64Decode(profilePhotoBase64!.split(',').last),
+                            )
+                            : null,
+                    child:
+                        profilePhotoBase64 == null
+                            ? const Icon(
+                              Icons.camera_alt,
+                              size: 40,
+                              color: Colors.grey,
+                            )
+                            : null,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  "Tap foto untuk unggah (opsional)",
+                  style: TextStyle(color: Colors.white70),
+                ),
+
+                const SizedBox(height: 24),
+
+                // Nama
+                CustomInputField(
+                  hintText: 'Nama',
+                  icon: Icons.person,
+                  controller: _nameController,
+                  validator:
+                      (value) =>
+                          value == null || value.isEmpty
+                              ? 'Nama tidak boleh kosong'
+                              : null,
+                ),
+                const SizedBox(height: 16),
+
+                // Email
+                CustomInputField(
+                  hintText: 'Email',
+                  icon: Icons.email_outlined,
+                  controller: _emailController,
+                  validator: (value) {
+                    if (value == null || value.isEmpty)
+                      return 'Email tidak boleh kosong';
+                    if (!value.contains('@') || !value.contains('.'))
+                      return 'Format email tidak valid';
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+
+                // Password
+                CustomPasswordField(
+                  controller: _passwordController,
+                  validator: (value) {
+                    if (value == null || value.isEmpty)
+                      return 'Password tidak boleh kosong';
+                    if (value.length < 6) return 'Password minimal 6 karakter';
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+
+                // Jenis Kelamin
+                GenderSelector(
+                  selectedGender: selectedGender,
+                  onChanged: (val) => setState(() => selectedGender = val),
+                ),
+                const SizedBox(height: 16),
+
+                // Dropdown Batch
+                BatchDropdown(
+                  batchOptions: _batchOptions,
+                  selectedValue: batchId,
+                  onChanged: (val) => setState(() => batchId = val),
+                ),
+                const SizedBox(height: 16),
+
+                // Dropdown Training
+                TrainingDropdown(
+                  trainingOptions: _trainingOptions,
+                  selectedValue: trainingId,
+                  onChanged: (val) => setState(() => trainingId = val),
+                ),
+
+                const SizedBox(height: 24),
+
+                // Button Daftar
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed:
+                        _isLoading
+                            ? null
+                            : () {
+                              if (_formKey.currentState!.validate())
+                                _register();
+                            },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColor.purpleMain,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      SizedBox(height: 6),
-                      Text(
-                        "Create an account",
-                        style: TextStyle(fontSize: 16, color: Colors.white70),
-                      ),
-                    ],
+                    ),
+                    child:
+                        _isLoading
+                            ? const SizedBox(
+                              height: 24,
+                              width: 24,
+                              child: CircularProgressIndicator(
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                                strokeWidth: 3,
+                              ),
+                            )
+                            : const Text(
+                              'Daftar',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
                   ),
                 ),
                 const SizedBox(height: 24),
-                Form(
-                  child: Column(
+
+                // Link Login
+                RichText(
+                  text: TextSpan(
+                    text: 'Sudah punya akun? ',
+                    style: const TextStyle(color: Colors.white70),
                     children: [
-                      // Upload Foto Profil
-                      Center(
-                        child: Column(
-                          children: [
-                            GestureDetector(
-                              onTap: _pickImage,
-                              child: CircleAvatar(
-                                radius: 50,
-                                backgroundColor: Colors.grey.shade300,
-                                backgroundImage:
-                                    profilePhotoBase64 != null
-                                        ? MemoryImage(
-                                          base64Decode(
-                                            profilePhotoBase64!.split(',').last,
-                                          ),
-                                        )
-                                        : null,
-                                child:
-                                    profilePhotoBase64 == null
-                                        ? const Icon(
-                                          Icons.camera_alt,
-                                          size: 40,
-                                          color: Colors.grey,
-                                        )
-                                        : null,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            const Text(
-                              "Tap foto untuk unggah (opsional)",
-                              style: TextStyle(color: Colors.white70),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-
-                      _buildInputField(
-                        hintText: 'Nama',
-                        icon: Icons.person,
-                        controller: _nameController,
-                      ),
-                      const SizedBox(height: 16),
-                      _buildInputField(
-                        hintText: 'Email',
-                        icon: Icons.email_outlined,
-                        controller: _emailController,
-                      ),
-                      const SizedBox(height: 16),
-                      _buildPasswordField(),
-                      const SizedBox(height: 16),
-                      _buildGenderSelector(),
-                      const SizedBox(height: 16),
-                      _buildBatchDropdown(),
-                      const SizedBox(height: 16),
-                      _buildTrainingDropdown(),
-                      const SizedBox(height: 24),
-
-                      // Tombol Daftar
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: _isLoading ? null : _register,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColor.purpleMain,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child:
-                              _isLoading
-                                  ? const SizedBox(
-                                    height: 24,
-                                    width: 24,
-                                    child: CircularProgressIndicator(
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        Colors.white,
-                                      ),
-                                      strokeWidth: 3,
-                                    ),
-                                  )
-                                  : const Text(
-                                    'Daftar',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                    ),
+                      TextSpan(
+                        text: 'Masuk Sekarang',
+                        style: const TextStyle(color: AppColor.cyanText),
+                        recognizer:
+                            TapGestureRecognizer()
+                              ..onTap = () {
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const LoginScreen(),
                                   ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 24),
-                      Center(
-                        child: RichText(
-                          text: TextSpan(
-                            text: 'Sudah punya akun? ',
-                            style: const TextStyle(color: Colors.white70),
-                            children: [
-                              TextSpan(
-                                text: 'Masuk Sekarang',
-                                style: const TextStyle(
-                                  color: AppColor.cyanText,
-                                ),
-                                recognizer:
-                                    TapGestureRecognizer()
-                                      ..onTap = () {
-                                        Navigator.pushReplacement(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder:
-                                                (context) =>
-                                                    const LoginScreen(),
-                                          ),
-                                        );
-                                      },
-                              ),
-                            ],
-                          ),
-                        ),
+                                );
+                              },
                       ),
                     ],
                   ),
@@ -297,142 +311,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildInputField({
-    required String hintText,
-    required IconData icon,
-    required TextEditingController controller,
-  }) {
-    return TextFormField(
-      controller: controller,
-      decoration: InputDecoration(
-        filled: true,
-        fillColor: Colors.white,
-        hintText: hintText,
-        prefixIcon: Icon(icon),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-    );
-  }
-
-  Widget _buildPasswordField() {
-    return TextFormField(
-      controller: _passwordController,
-      obscureText: _obscureText,
-      decoration: InputDecoration(
-        filled: true,
-        fillColor: Colors.white,
-        hintText: 'Password',
-        prefixIcon: const Icon(Icons.lock_outline),
-        suffixIcon: IconButton(
-          icon: Icon(_obscureText ? Icons.visibility_off : Icons.visibility),
-          onPressed: () {
-            setState(() {
-              _obscureText = !_obscureText;
-            });
-          },
-        ),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-    );
-  }
-
-  Widget _buildGenderSelector() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          "Jenis Kelamin",
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(child: _genderOptionTile(value: 'L', label: 'Laki-laki')),
-            const SizedBox(width: 12),
-            Expanded(child: _genderOptionTile(value: 'P', label: 'Perempuan')),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _genderOptionTile({required String value, required String label}) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color:
-              selectedGender == value
-                  ? AppColor.purpleMain
-                  : Colors.grey.shade300,
-          width: 2,
-        ),
-      ),
-      child: RadioListTile<String>(
-        value: value,
-        groupValue: selectedGender,
-        title: Text(
-          label,
-          style: const TextStyle(color: Colors.black, fontSize: 16),
-        ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-        dense: true,
-        onChanged: (value) => setState(() => selectedGender = value!),
-      ),
-    );
-  }
-
-  Widget _buildBatchDropdown() {
-    return DropdownButtonFormField<int>(
-      value: batchId,
-      items:
-          _batchOptions
-              .map(
-                (BatchesData batch) => DropdownMenuItem<int>(
-                  value: batch.id,
-                  child: Text(batch.batchKe),
-                ),
-              )
-              .toList(),
-      decoration: InputDecoration(
-        filled: true,
-        fillColor: Colors.white,
-        hintText: 'Pilih Batch',
-        prefixIcon: const Icon(Icons.list_alt),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-      onChanged: (value) => setState(() => batchId = value),
-    );
-  }
-
-  Widget _buildTrainingDropdown() {
-    return DropdownButtonFormField<int>(
-      value: trainingId,
-      items:
-          _trainingOptions
-              .map(
-                (DataTrainings training) => DropdownMenuItem<int>(
-                  value: training.id,
-                  child: Text(training.title),
-                ),
-              )
-              .toList(),
-      decoration: InputDecoration(
-        filled: true,
-        fillColor: Colors.white,
-        hintText: 'Pilih Training',
-        prefixIcon: const Icon(Icons.school),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-      onChanged: (value) => setState(() => trainingId = value),
     );
   }
 }

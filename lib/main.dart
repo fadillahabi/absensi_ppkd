@@ -3,6 +3,7 @@ import 'package:ppkd_flutter/constant/app_color.dart';
 import 'package:ppkd_flutter/view/auth_screen/login_screen.dart';
 import 'package:ppkd_flutter/view/auth_screen/register_screen.dart';
 import 'package:ppkd_flutter/view/edit_profile_screen.dart';
+import 'package:ppkd_flutter/view/map_screen.dart';
 import 'package:ppkd_flutter/view/splash_screen.dart';
 import 'package:ppkd_flutter/widgets/buttom_navbar.dart';
 
@@ -23,7 +24,7 @@ class MyApp extends StatelessWidget {
         LoginScreen.id: (context) => const LoginScreen(),
         RegisterScreen.id: (context) => const RegisterScreen(),
         EditProfileScreen.id: (context) => const EditProfileScreen(),
-        // Jangan daftarkan lagi HomeScreen, MapScreen, dll jika pakai dari BottomNav
+        MapScreen.id: (context) => const MapScreen(),
       },
       onGenerateRoute: (settings) {
         if (settings.name == CustomButtonNavBar.id) {

@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:ppkd_flutter/api/endpoint.dart';
 import 'package:ppkd_flutter/helper/shared_preference.dart';
-import 'package:ppkd_flutter/models/bathes_models.dart';
+import 'package:ppkd_flutter/models/bathes_model.dart';
 import 'package:ppkd_flutter/models/login_model.dart';
 import 'package:ppkd_flutter/models/register_model.dart';
 import 'package:ppkd_flutter/models/trainings_model.dart';
@@ -106,7 +106,7 @@ class UserApi {
       Uri.parse(Endpoint.profile),
       headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
     );
-
+    print("GET PROFILE RESPONSE: ${response.body}");
     if (response.statusCode == 200) {
       final jsonData = json.decode(response.body);
       if (jsonData['data'] == null) {
@@ -115,6 +115,33 @@ class UserApi {
       return UserLogin.fromJson(jsonData['data']);
     } else {
       throw Exception('Gagal memuat profil. Status: ${response.statusCode}');
+    }
+  }
+
+  static Future<bool> updateProfile({
+    required String token,
+    required String name,
+    required String email,
+    required String jenisKelamin,
+  }) async {
+    final response = await http.put(
+      Uri.parse(Endpoint.updateProfile), // pastikan Endpoint ini ada
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'name': name,
+        'email': email,
+        'jenis_kelamin': jenisKelamin,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      throw Exception('Gagal update profil. ${response.body}');
     }
   }
 }

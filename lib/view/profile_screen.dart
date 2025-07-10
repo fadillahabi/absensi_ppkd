@@ -22,6 +22,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<UserLogin> fetchUserProfile() async {
+    print("Memuat ulang profil...");
     final token = await PreferencesOTI.getToken();
     if (token == null) {
       throw Exception('Token tidak ditemukan. Pengguna belum login.');
@@ -102,13 +103,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
               _buildMenuItem(
                 icon: Icons.person_outline,
                 text: "Ubah Profil",
-                onTap: () {
-                  Navigator.push(
+                onTap: () async {
+                  final result = await Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => EditProfileScreen(),
+                      builder: (context) => const EditProfileScreen(),
                     ),
                   );
+
+                  if (result == true) {
+                    print("Profil diperbarui, muat ulang...");
+                    setState(() {
+                      _userFuture = fetchUserProfile();
+                    });
+                  }
                 },
               ),
               _buildMenuItem(

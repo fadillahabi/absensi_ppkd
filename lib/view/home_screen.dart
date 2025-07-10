@@ -1,5 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:ppkd_flutter/constant/app_color.dart';
+import 'package:ppkd_flutter/helper/shared_preference.dart';
+import 'package:ppkd_flutter/models/login_model.dart';
+import 'package:ppkd_flutter/models/trainings_model.dart';
+import 'package:ppkd_flutter/sevices/auth_api.dart';
+import 'package:ppkd_flutter/view/map_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -10,208 +18,298 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  List<DataTrainings> trainings = [];
+  String selectedTraining = "";
+  UserLogin? user;
+
+  DateTime _now = DateTime.now();
+  Timer? _timer;
+
+  bool isCheckedIn = false;
+  DateTime? checkInTime;
+  DateTime? checkOutTime;
+
+  String currentAddress = "Memuat lokasi...";
+
+  @override
+  void initState() {
+    super.initState();
+    fetchTrainings();
+    fetchUserProfile();
+    _startClock();
+  }
+
+  void _startClock() {
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      setState(() {
+        _now = DateTime.now();
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> fetchUserProfile() async {
+    final token = await PreferencesOTI.getToken();
+    if (token == null) return;
+
+    try {
+      final result = await UserApi.getProfile(token);
+      setState(() {
+        user = result;
+      });
+    } catch (e) {
+      print("Gagal mengambil data user: $e");
+    }
+  }
+
+  Future<void> fetchTrainings() async {
+    try {
+      final response = await UserApi.getTrainings();
+      setState(() {
+        trainings = response;
+        if (trainings.isNotEmpty) {
+          selectedTraining = trainings[0].title;
+        }
+      });
+    } catch (e) {
+      print("Gagal mengambil data training: $e");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColor.purpleMain,
-
-      body: Stack(
-        children: [
-          // Background putih dengan lengkungan
-          Positioned(
-            top: 280,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: Container(
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                // borderRadius: BorderRadius.only(
-                //   topLeft: Radius.circular(36),
-                //   topRight: Radius.circular(36),
-                // ),
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/images/background.jpg'),
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 40, left: 20, right: 20),
+              child: Row(
+                children: [
+                  const CircleAvatar(
+                    radius: 32,
+                    backgroundColor: Colors.white,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.all(Radius.circular(50)),
+                      child: Image(
+                        image: AssetImage("assets/images/student.png"),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "Semangat Pagi",
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        Text(
+                          user?.name ?? 'Memuat nama...',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          selectedTraining.isNotEmpty
+                              ? selectedTraining
+                              : "Memuat...",
+                          style: const TextStyle(color: Colors.white),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
-
-          // Konten utama
-          SingleChildScrollView(
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(top: 60, left: 20, right: 20),
-                  child: Row(
+            const SizedBox(height: 20),
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.only(top: 20),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+                ),
+                child: SingleChildScrollView(
+                  child: Column(
                     children: [
-                      const CircleAvatar(
-                        radius: 32,
-                        backgroundColor: Colors.white,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.all(Radius.circular(50)),
-                          child: Image(
-                            image: AssetImage("assets/images/student.png"),
+                      _buildAttendanceCard(),
+                      const SizedBox(height: 20),
+                      _buildLocationAndTime(),
+                      const SizedBox(height: 20),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            "Riwayat Kehadiran",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: AppColor.purpleMain,
+                            ),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 16),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
-                          Text(
-                            "Selamat Pagi",
-                            style: TextStyle(color: Colors.white),
-                          ),
-                          Text(
-                            "Muhammad Rio Akbar",
-                            style: TextStyle(color: Colors.white),
-                          ),
-                          Text(
-                            "123456789",
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ],
+                      const SizedBox(height: 8),
+                      _buildHistoryCard(
+                        "13",
+                        "Monday",
+                        "07 : 50 : 00",
+                        "17 : 50 : 00",
                       ),
+                      _buildHistoryCard(
+                        "12",
+                        "Friday",
+                        "08 : 00 : 00",
+                        "17 : 00 : 00",
+                      ),
+                      _buildHistoryCard(
+                        "11",
+                        "Thursday",
+                        "08 : 10 : 00",
+                        "17 : 05 : 00",
+                      ),
+                      _buildHistoryCard(
+                        "10",
+                        "Wednesday",
+                        "08 : 00 : 00",
+                        "17 : 00 : 00",
+                      ),
+                      const SizedBox(height: 80),
                     ],
                   ),
                 ),
-                const SizedBox(height: 20),
-                Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 16),
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Colors.black12,
-                        blurRadius: 4,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: ListTile(
-                    leading: Icon(
-                      Icons.calendar_today,
-                      color: AppColor.purpleSecond,
-                    ),
-                    title: const Text(
-                      "Take attendance today",
-                      style: TextStyle(color: AppColor.purpleMain),
-                    ),
-                    trailing: Icon(
-                      Icons.access_time,
-                      color: AppColor.purpleSecond,
-                    ),
-                    onTap: () {},
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 20),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Colors.black12,
-                        blurRadius: 8,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.location_on,
-                            size: 20,
-                            color: AppColor.purpleMain,
-                          ),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: Text(
-                              "Jl. Panglima Djuminang No.5, Medan Petisah, Sumatera Utara",
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: AppColor.purpleMain,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          _buildTimeBox("Check In", "07 : 50 : 00"),
-                          _buildTimeBox(
-                            "Check Out",
-                            "17 : 50 : 00",
-                            showButton: true,
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      "Riwayat Kehadiran",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: AppColor.purpleMain,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                _buildHistoryCard(
-                  "13",
-                  "Monday",
-                  "07 : 50 : 00",
-                  "17 : 50 : 00",
-                ),
-                _buildHistoryCard(
-                  "12",
-                  "Friday",
-                  "08 : 00 : 00",
-                  "17 : 00 : 00",
-                ),
-                _buildHistoryCard(
-                  "12",
-                  "Friday",
-                  "08 : 00 : 00",
-                  "17 : 00 : 00",
-                ),
-                _buildHistoryCard(
-                  "12",
-                  "Friday",
-                  "08 : 00 : 00",
-                  "17 : 00 : 00",
-                ),
-                _buildHistoryCard(
-                  "12",
-                  "Friday",
-                  "08 : 00 : 00",
-                  "17 : 00 : 00",
-                ),
-                const SizedBox(height: 80),
-              ],
+              ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAttendanceCard() {
+    final formattedTime = DateFormat('HH : mm : ss').format(_now);
+    final formattedDay = DateFormat('EEEE, dd MMMM yyyy').format(_now);
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEDEBFA),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 2)),
+        ],
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.access_time, size: 32, color: Colors.black87),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                formattedDay,
+                style: const TextStyle(fontSize: 13, color: Colors.black54),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                formattedTime,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black,
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  Widget _buildTimeBox(String label, String time, {bool showButton = false}) {
+  Widget _buildLocationAndTime() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 2)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.location_on, size: 20, color: AppColor.purpleMain),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  "Jl. Panglima Djuminang No.5, Medan Petisah, Sumatera Utara",
+                  style: TextStyle(fontSize: 12, color: AppColor.purpleMain),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildTimeBox(
+                "Check In",
+                checkInTime != null
+                    ? DateFormat('HH : mm : ss').format(checkInTime!)
+                    : "-- : -- : --",
+                showButton: !isCheckedIn && checkInTime == null,
+                onPressed: () {
+                  Navigator.pushNamed(context, MapScreen.id);
+                },
+              ),
+              _buildTimeBox(
+                "Check Out",
+                checkOutTime != null
+                    ? DateFormat('HH : mm : ss').format(checkOutTime!)
+                    : "-- : -- : --",
+                showButton: isCheckedIn && checkOutTime == null,
+                onPressed: () {
+                  Navigator.pushNamed(context, MapScreen.id);
+                },
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTimeBox(
+    String label,
+    String time, {
+    bool showButton = false,
+    VoidCallback? onPressed,
+  }) {
     return Expanded(
       child: Container(
         height: 140,
@@ -242,19 +340,21 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 16),
             if (showButton)
-              Container(
-                margin: const EdgeInsets.only(top: 8),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColor.purpleMain,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Text(
-                  "Check Out",
-                  style: TextStyle(color: Colors.white),
+              GestureDetector(
+                onTap: onPressed,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColor.purpleMain,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    label,
+                    style: const TextStyle(color: Colors.white),
+                  ),
                 ),
               ),
           ],
