@@ -1,13 +1,16 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
 import 'package:ppkd_flutter/constant/app_color.dart';
 import 'package:ppkd_flutter/helper/shared_preference.dart';
 import 'package:ppkd_flutter/models/login_model.dart';
 import 'package:ppkd_flutter/models/trainings_model.dart';
-import 'package:ppkd_flutter/sevices/auth_api.dart';
-import 'package:ppkd_flutter/view/map_screen.dart';
+import 'package:ppkd_flutter/sevices/auth_services.dart';
+import 'package:ppkd_flutter/view/chechkout_screen.dart';
+import 'package:ppkd_flutter/view/checkin_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -25,7 +28,6 @@ class _HomeScreenState extends State<HomeScreen> {
   DateTime _now = DateTime.now();
   Timer? _timer;
 
-  bool isCheckedIn = false;
   DateTime? checkInTime;
   DateTime? checkOutTime;
 
@@ -37,6 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
     fetchTrainings();
     fetchUserProfile();
     _startClock();
+    getCurrentLocation();
   }
 
   void _startClock() {
@@ -81,6 +84,32 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> getCurrentLocation() async {
+    try {
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.best,
+      );
+
+      final placemarks = await placemarkFromCoordinates(
+        position.latitude,
+        position.longitude,
+      );
+
+      if (placemarks.isNotEmpty) {
+        final p = placemarks.first;
+        setState(() {
+          currentAddress =
+              "${p.street}, ${p.subLocality}, ${p.locality}, ${p.administrativeArea}";
+        });
+      }
+    } catch (e) {
+      print("Gagal mengambil lokasi: $e");
+      setState(() {
+        currentAddress = "Gagal mengambil lokasi";
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -99,15 +128,40 @@ class _HomeScreenState extends State<HomeScreen> {
               padding: const EdgeInsets.only(top: 40, left: 20, right: 20),
               child: Row(
                 children: [
-                  const CircleAvatar(
+                  CircleAvatar(
                     radius: 32,
                     backgroundColor: Colors.white,
                     child: ClipRRect(
-                      borderRadius: BorderRadius.all(Radius.circular(50)),
-                      child: Image(
-                        image: AssetImage("assets/images/student.png"),
-                        fit: BoxFit.cover,
-                      ),
+                      borderRadius: BorderRadius.circular(50),
+                      child:
+                          (user?.profilePhotoUrl != null)
+                              ? Image.network(
+                                user!.profilePhotoUrl!,
+                                fit: BoxFit.cover,
+                                loadingBuilder: (
+                                  context,
+                                  child,
+                                  loadingProgress,
+                                ) {
+                                  if (loadingProgress == null) return child;
+                                  return const Center(
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  );
+                                },
+                                errorBuilder:
+                                    (_, __, ___) => const Icon(
+                                      Icons.broken_image,
+                                      size: 24,
+                                      color: Colors.grey,
+                                    ),
+                              )
+                              : const Center(
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              ),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -237,7 +291,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
-                  color: Colors.black,
                 ),
               ),
             ],
@@ -267,7 +320,7 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
-                  "Jl. Panglima Djuminang No.5, Medan Petisah, Sumatera Utara",
+                  currentAddress,
                   style: TextStyle(fontSize: 12, color: AppColor.purpleMain),
                 ),
               ),
@@ -282,9 +335,20 @@ class _HomeScreenState extends State<HomeScreen> {
                 checkInTime != null
                     ? DateFormat('HH : mm : ss').format(checkInTime!)
                     : "-- : -- : --",
-                showButton: !isCheckedIn && checkInTime == null,
-                onPressed: () {
-                  Navigator.pushNamed(context, MapScreen.id);
+                showButton: true,
+                onPressed: () async {
+                  final result =
+                      await Navigator.pushNamed(context, CheckinScreen.id)
+                          as Map<String, dynamic>?;
+
+                  if (result != null && result['checkInTime'] != null) {
+                    setState(() {
+                      checkInTime = DateFormat(
+                        'HH:mm',
+                      ).parse(result['checkInTime']);
+                    });
+                    getCurrentLocation();
+                  }
                 },
               ),
               _buildTimeBox(
@@ -292,9 +356,20 @@ class _HomeScreenState extends State<HomeScreen> {
                 checkOutTime != null
                     ? DateFormat('HH : mm : ss').format(checkOutTime!)
                     : "-- : -- : --",
-                showButton: isCheckedIn && checkOutTime == null,
-                onPressed: () {
-                  Navigator.pushNamed(context, MapScreen.id);
+                showButton: true,
+                onPressed: () async {
+                  final result =
+                      await Navigator.pushNamed(context, CheckOutScreen.id)
+                          as Map<String, dynamic>?;
+
+                  if (result != null && result['checkOutTime'] != null) {
+                    setState(() {
+                      checkOutTime = DateFormat(
+                        'HH:mm',
+                      ).parse(result['checkOutTime']);
+                    });
+                    getCurrentLocation();
+                  }
                 },
               ),
             ],

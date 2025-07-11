@@ -6,7 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:ppkd_flutter/constant/app_color.dart';
 import 'package:ppkd_flutter/models/bathes_model.dart';
 import 'package:ppkd_flutter/models/trainings_model.dart';
-import 'package:ppkd_flutter/sevices/auth_api.dart';
+import 'package:ppkd_flutter/sevices/auth_services.dart';
 import 'package:ppkd_flutter/view/auth_screen/login_screen.dart';
 import 'package:ppkd_flutter/widgets/batch_dropdown.dart';
 import 'package:ppkd_flutter/widgets/custom_input_field.dart';

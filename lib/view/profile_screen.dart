@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ppkd_flutter/helper/shared_preference.dart';
 import 'package:ppkd_flutter/models/login_model.dart'; // Model user
-import 'package:ppkd_flutter/sevices/auth_api.dart';
+import 'package:ppkd_flutter/sevices/auth_services.dart';
 import 'package:ppkd_flutter/view/edit_profile_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -70,10 +70,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     CircleAvatar(
                       radius: 60,
                       backgroundColor: Colors.white,
-                      child: Icon(
-                        Icons.person,
-                        size: 50,
-                        color: Colors.grey[700],
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(50),
+                        child:
+                            (user.profilePhotoUrl != null)
+                                ? Image.network(
+                                  "${user.profilePhotoUrl}?t=${DateTime.now().millisecondsSinceEpoch}",
+                                  fit: BoxFit.cover,
+                                  loadingBuilder: (
+                                    context,
+                                    child,
+                                    loadingProgress,
+                                  ) {
+                                    if (loadingProgress == null) return child;
+                                    return const Center(
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    );
+                                  },
+                                  errorBuilder:
+                                      (_, __, ___) => const Icon(
+                                        Icons.broken_image,
+                                        size: 24,
+                                        color: Colors.grey,
+                                      ),
+                                )
+                                : const Center(
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                ),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -111,10 +138,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   );
 
-                  if (result == true) {
-                    print("Profil diperbarui, muat ulang...");
+                  if (result != null && result is UserLogin) {
+                    print("Profil diperbarui, pakai data terbaru...");
                     setState(() {
-                      _userFuture = fetchUserProfile();
+                      _userFuture = Future.value(
+                        result,
+                      ); // ← langsung pakai hasil terbaru
                     });
                   }
                 },

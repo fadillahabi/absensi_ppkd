@@ -2,7 +2,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:ppkd_flutter/constant/app_color.dart';
 import 'package:ppkd_flutter/helper/shared_preference.dart';
-import 'package:ppkd_flutter/sevices/auth_api.dart';
+import 'package:ppkd_flutter/sevices/auth_services.dart';
 import 'package:ppkd_flutter/view/auth_screen/register_screen.dart';
 import 'package:ppkd_flutter/widgets/buttom_navbar.dart';
 import 'package:ppkd_flutter/widgets/custom_input_field.dart';

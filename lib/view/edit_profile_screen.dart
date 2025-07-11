@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:ppkd_flutter/helper/shared_preference.dart';
-import 'package:ppkd_flutter/sevices/auth_api.dart';
+import 'package:ppkd_flutter/sevices/auth_services.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -15,8 +18,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final TextEditingController _emailController = TextEditingController();
   String? _selectedGender;
   final _formKey = GlobalKey<FormState>();
-
+  File? _imageFile;
   bool _isLoading = false;
+  String _currentPhotoUrl = '';
 
   @override
   void initState() {
@@ -32,10 +36,20 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       final profile = await UserApi.getProfile(token);
       _nameController.text = profile.name ?? '';
       _emailController.text = profile.email ?? '';
-      _selectedGender = profile.jenisKelamin ?? 'L'; // Default ke 'L' jika null
+      _selectedGender = profile.jenisKelamin ?? 'L';
+      _currentPhotoUrl = profile.profilePhotoUrl ?? '';
       setState(() {});
     } catch (e) {
       print("Gagal memuat profil: $e");
+    }
+  }
+
+  Future<void> _pickImage() async {
+    final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (picked != null) {
+      setState(() {
+        _imageFile = File(picked.path);
+      });
     }
   }
 
@@ -46,6 +60,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     setState(() => _isLoading = true);
 
     try {
+      // Update text data
       final success = await UserApi.updateProfile(
         token: token,
         name: _nameController.text,
@@ -53,26 +68,27 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         jenisKelamin: _selectedGender ?? '',
       );
 
-      setState(() => _isLoading = false);
-
       if (!mounted) return;
 
-      if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Profil berhasil diperbarui"),
-            backgroundColor: Colors.green,
-          ),
-        );
-        Navigator.pop(context, true);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Gagal memperbarui profil"),
-            backgroundColor: Colors.red,
-          ),
-        );
+      // Upload photo if selected
+      if (_imageFile != null) {
+        await UserApi.updateProfilePhoto(token, _imageFile!);
       }
+
+      // Ambil ulang profil terbaru
+      final updatedUser = await UserApi.getProfile(token);
+
+      setState(() => _isLoading = false);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Profil berhasil diperbarui"),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      // Kirim user baru ke ProfileScreen
+      Navigator.pop(context, updatedUser);
     } catch (e) {
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -107,9 +123,31 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         child: Column(
           children: [
             const SizedBox(height: 16),
-            const CircleAvatar(
-              radius: 60,
-              backgroundImage: AssetImage('assets/images/student.png'),
+            GestureDetector(
+              onTap: _pickImage,
+              child: Stack(
+                alignment: Alignment.bottomRight,
+                children: [
+                  CircleAvatar(
+                    radius: 60,
+                    backgroundImage:
+                        _imageFile != null
+                            ? FileImage(_imageFile!)
+                            : (_currentPhotoUrl.isNotEmpty
+                                ? NetworkImage(_currentPhotoUrl)
+                                : const AssetImage('assets/images/student.png')
+                                    as ImageProvider),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white,
+                    ),
+                    child: const Icon(Icons.edit, size: 20),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 24),
             Form(
@@ -135,12 +173,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       labelText: 'Email',
                       border: OutlineInputBorder(),
                     ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty)
-                        return 'Email wajib diisi';
-                      if (!value.contains('@')) return 'Email tidak valid';
-                      return null;
-                    },
+                    enabled: false,
                   ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
@@ -153,13 +186,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       DropdownMenuItem(value: 'L', child: Text('Laki-laki')),
                       DropdownMenuItem(value: 'P', child: Text('Perempuan')),
                     ],
-                    onChanged:
-                        (value) => setState(() => _selectedGender = value),
-                    validator:
-                        (value) =>
-                            value == null
-                                ? 'Jenis kelamin wajib dipilih'
-                                : null,
+                    onChanged: null, // Tidak bisa diubah
                   ),
                   const SizedBox(height: 24),
                   ElevatedButton(

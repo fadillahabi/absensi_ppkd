@@ -9,8 +9,21 @@ class HistoryScreen extends StatefulWidget {
 }
 
 class _HistoryScreenState extends State<HistoryScreen> {
-  String selectedMonth = 'Juni';
-  final List<String> months = ['Juni', 'Juli', 'Agustus', 'September'];
+  String selectedMonth = 'Juli'; // default saat pertama kali dibuka
+  final List<String> months = [
+    'Januari',
+    'Februari',
+    'Maret',
+    'April',
+    'Mei',
+    'Juni',
+    'Juli',
+    'Agustus',
+    'September',
+    'Oktober',
+    'November',
+    'Desember',
+  ];
 
   final List<Map<String, String>> dummyAttendance = List.generate(
     4,
@@ -25,78 +38,87 @@ class _HistoryScreenState extends State<HistoryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildMonthSelector(),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  "Riwayat Kehadiran",
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                    fontSize: 16,
-                  ),
+      backgroundColor: Colors.grey[100],
+      body: Column(
+        children: [
+          _buildMonthSelector(),
+          const SizedBox(height: 16),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                "Riwayat Kehadiran",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
                 ),
               ),
             ),
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: dummyAttendance.length,
-                itemBuilder: (context, index) {
-                  final item = dummyAttendance[index];
-                  return _buildAttendanceCard(item);
-                },
-              ),
+          ),
+          const SizedBox(height: 8),
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              itemCount: dummyAttendance.length,
+              itemBuilder: (context, index) {
+                return _buildAttendanceCard(dummyAttendance[index]);
+              },
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildMonthSelector() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-      color: Color(0xFF5A32DC),
-      child: Row(
-        children:
-            months.map((month) {
-              final isSelected = selectedMonth == month;
-              return Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      selectedMonth = month;
-                    });
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isSelected ? Colors.white : Colors.transparent,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.white, width: 1),
-                    ),
-                    child: Text(
-                      month,
-                      style: TextStyle(
-                        color: isSelected ? Color(0xFF5A32DC) : Colors.white,
-                        fontWeight: FontWeight.bold,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
+      decoration: const BoxDecoration(
+        color: Color(0xFF5A32DC),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(32),
+          bottomRight: Radius.circular(32),
+        ),
+      ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children:
+              months.map((month) {
+                final isSelected = selectedMonth == month;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 12),
+                  child: GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        selectedMonth = month;
+                      });
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isSelected ? Colors.white : Colors.transparent,
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: Colors.white),
+                      ),
+                      child: Text(
+                        month,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: isSelected ? Color(0xFF5A32DC) : Colors.white,
+                        ),
                       ),
                     ),
                   ),
-                ),
-              );
-            }).toList(),
+                );
+              }).toList(),
+        ),
       ),
     );
   }
@@ -104,85 +126,77 @@ class _HistoryScreenState extends State<HistoryScreen> {
   Widget _buildAttendanceCard(Map<String, String> item) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
       decoration: BoxDecoration(
-        color: Color(0xFFEAEAFE),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black12.withOpacity(0.06),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: [
           Container(
-            width: 80,
-            padding: const EdgeInsets.all(12),
+            width: 70,
+            height: 70,
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(16),
-                bottomLeft: Radius.circular(16),
-              ),
+              color: Color(0xFFEAEAFE),
+              borderRadius: BorderRadius.circular(12),
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  item['date']!,
+                  item['date'] ?? '',
                   style: const TextStyle(
-                    fontSize: 20,
+                    fontSize: 22,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF5A32DC),
                   ),
                 ),
                 Text(
-                  item['day']!,
-                  style: const TextStyle(color: Color(0xFF5A32DC)),
+                  item['day'] ?? '',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF5A32DC),
+                  ),
                 ),
               ],
             ),
           ),
-          const VerticalDivider(width: 1, thickness: 1, color: Colors.white),
+          const SizedBox(width: 16),
           Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        "Check In",
-                        style: TextStyle(color: Colors.black54),
-                      ),
-                      Text(
-                        item['checkIn']!,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF5A32DC),
-                        ),
-                      ),
-                    ],
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        "Check Out",
-                        style: TextStyle(color: Colors.black54),
-                      ),
-                      Text(
-                        item['checkOut']!,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF5A32DC),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildCheckInfo("Check In", item['checkIn'] ?? '-'),
+                const SizedBox(height: 8),
+                _buildCheckInfo("Check Out", item['checkOut'] ?? '-'),
+              ],
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildCheckInfo(String label, String time) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: const TextStyle(color: Colors.black54)),
+        Text(
+          time,
+          style: const TextStyle(
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF5A32DC),
+          ),
+        ),
+      ],
     );
   }
 }

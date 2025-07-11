@@ -44,6 +44,8 @@ class UserLogin {
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
+  final String? profilePhotoUrl;
+
   UserLogin({
     this.id,
     this.name,
@@ -52,6 +54,7 @@ class UserLogin {
     this.emailVerifiedAt,
     this.createdAt,
     this.updatedAt,
+    this.profilePhotoUrl,
   });
 
   factory UserLogin.fromJson(Map<String, dynamic> json) => UserLogin(
@@ -64,6 +67,10 @@ class UserLogin {
         json["created_at"] != null ? DateTime.parse(json["created_at"]) : null,
     updatedAt:
         json["updated_at"] != null ? DateTime.parse(json["updated_at"]) : null,
+    profilePhotoUrl:
+        json["profile_photo"] != null
+            ? "https://appabsensi.mobileprojp.com/public/${json["profile_photo"]}"
+            : null,
   );
 
   Map<String, dynamic> toJson() => {
@@ -74,5 +81,6 @@ class UserLogin {
     "email_verified_at": emailVerifiedAt,
     "created_at": createdAt?.toIso8601String(),
     "updated_at": updatedAt?.toIso8601String(),
+    "profile_photo_url": profilePhotoUrl,
   };
 }

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:http/http.dart' as http;
 import 'package:ppkd_flutter/api/endpoint.dart';
@@ -142,6 +143,34 @@ class UserApi {
       return true;
     } else {
       throw Exception('Gagal update profil. ${response.body}');
+    }
+  }
+
+  static Future<String?> updateProfilePhoto(
+    String token,
+    File photoFile,
+  ) async {
+    final uri = Uri.parse("${Endpoint.baseUrlApi}/profile/photo");
+
+    final request =
+        http.MultipartRequest('PUT', uri) // GANTI dari POST ke PUT
+          ..headers['Authorization'] = 'Bearer $token'
+          ..headers['Accept'] = 'application/json'
+          ..files.add(
+            await http.MultipartFile.fromPath('profile_photo', photoFile.path),
+          );
+
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
+
+    print("UPLOAD FOTO RESPONSE: ${response.body}");
+
+    if (response.statusCode == 200) {
+      final jsonData = json.decode(response.body);
+      return jsonData['data']['profile_photo'];
+    } else {
+      print("Gagal upload foto profil: ${response.body}");
+      return null;
     }
   }
 }
