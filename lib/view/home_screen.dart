@@ -1,14 +1,14 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
 import 'package:ppkd_flutter/constant/app_color.dart';
 import 'package:ppkd_flutter/helper/shared_preference.dart';
+import 'package:ppkd_flutter/models/absen_history_model.dart';
 import 'package:ppkd_flutter/models/login_model.dart';
-import 'package:ppkd_flutter/models/trainings_model.dart';
-import 'package:ppkd_flutter/sevices/auth_services.dart';
+import 'package:ppkd_flutter/services/absen_services.dart';
+import 'package:ppkd_flutter/services/auth_services.dart';
 import 'package:ppkd_flutter/view/chechkout_screen.dart';
 import 'package:ppkd_flutter/view/checkin_screen.dart';
 
@@ -21,25 +21,36 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  List<DataTrainings> trainings = [];
   String selectedTraining = "";
   UserLogin? user;
-
   DateTime _now = DateTime.now();
   Timer? _timer;
-
   DateTime? checkInTime;
   DateTime? checkOutTime;
-
   String currentAddress = "Memuat lokasi...";
+  List<HistoryAbsenData> attendanceHistory = [];
 
   @override
   void initState() {
     super.initState();
-    fetchTrainings();
     fetchUserProfile();
     _startClock();
     getCurrentLocation();
+    fetchAttendanceHistory();
+  }
+
+  Future<void> fetchAttendanceHistory() async {
+    final token = await PreferencesOTI.getToken();
+    if (token == null) return;
+
+    try {
+      final history = await AbsenServices.fetchAbsenHistory(token);
+      setState(() {
+        attendanceHistory = history;
+      });
+    } catch (e) {
+      print("Gagal mengambil data riwayat absen: $e");
+    }
   }
 
   void _startClock() {
@@ -64,23 +75,10 @@ class _HomeScreenState extends State<HomeScreen> {
       final result = await UserApi.getProfile(token);
       setState(() {
         user = result;
+        selectedTraining = result.training?.title ?? "Memuat...";
       });
     } catch (e) {
       print("Gagal mengambil data user: $e");
-    }
-  }
-
-  Future<void> fetchTrainings() async {
-    try {
-      final response = await UserApi.getTrainings();
-      setState(() {
-        trainings = response;
-        if (trainings.isNotEmpty) {
-          selectedTraining = trainings[0].title;
-        }
-      });
-    } catch (e) {
-      print("Gagal mengambil data training: $e");
     }
   }
 
@@ -113,149 +111,141 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/images/background.jpg'),
-            fit: BoxFit.cover,
-          ),
-        ),
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(top: 40, left: 20, right: 20),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 32,
-                    backgroundColor: Colors.white,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(50),
-                      child:
-                          (user?.profilePhotoUrl != null)
-                              ? Image.network(
-                                user!.profilePhotoUrl!,
-                                fit: BoxFit.cover,
-                                loadingBuilder: (
-                                  context,
-                                  child,
-                                  loadingProgress,
-                                ) {
-                                  if (loadingProgress == null) return child;
-                                  return const Center(
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  );
-                                },
-                                errorBuilder:
-                                    (_, __, ___) => const Icon(
-                                      Icons.broken_image,
-                                      size: 24,
-                                      color: Colors.grey,
-                                    ),
-                              )
-                              : const Center(
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          "Semangat Pagi",
-                          style: TextStyle(color: Colors.white),
-                        ),
-                        Text(
-                          user?.name ?? 'Memuat nama...',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          selectedTraining.isNotEmpty
-                              ? selectedTraining
-                              : "Memuat...",
-                          style: const TextStyle(color: Colors.white),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.only(top: 20),
+      body: Column(
+        children: [
+          Stack(
+            children: [
+              Container(
+                width: double.infinity,
+                height: 200,
                 decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+                  image: DecorationImage(
+                    image: AssetImage('assets/images/background1.jpg'),
+                    fit: BoxFit.cover,
+                  ),
                 ),
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      _buildAttendanceCard(),
-                      const SizedBox(height: 20),
-                      _buildLocationAndTime(),
-                      const SizedBox(height: 20),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            "Riwayat Kehadiran",
-                            style: TextStyle(
+              ),
+              Padding(
+                padding: const EdgeInsets.only(top: 20, left: 20, right: 20),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 32,
+                      backgroundColor: Colors.white,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(50),
+                        child:
+                            (user?.profilePhotoUrl != null &&
+                                    user!.profilePhotoUrl!.isNotEmpty)
+                                ? Image.network(
+                                  user!.profilePhotoUrl!,
+                                  fit: BoxFit.cover,
+                                )
+                                : const Icon(
+                                  Icons.person,
+                                  size: 32,
+                                  color: Colors.grey,
+                                ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "Semangat Pagi",
+                            style: TextStyle(color: Colors.white),
+                          ),
+                          Text(
+                            user?.name ?? 'Memuat nama...',
+                            style: const TextStyle(
+                              color: Colors.white,
                               fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                              color: AppColor.purpleMain,
+                            ),
+                          ),
+                          Text(
+                            selectedTraining.isNotEmpty
+                                ? selectedTraining
+                                : "Memuat...",
+                            style: const TextStyle(color: Colors.white),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          Expanded(
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  // padding: const EdgeInsets.only(top: 60),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(32),
+                    ),
+                  ),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 60),
+                        _buildLocationAndTime(),
+                        const SizedBox(height: 20),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              "Riwayat Kehadiran",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: AppColor.purpleMain,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      _buildHistoryCard(
-                        "13",
-                        "Monday",
-                        "07 : 50 : 00",
-                        "17 : 50 : 00",
-                      ),
-                      _buildHistoryCard(
-                        "12",
-                        "Friday",
-                        "08 : 00 : 00",
-                        "17 : 00 : 00",
-                      ),
-                      _buildHistoryCard(
-                        "11",
-                        "Thursday",
-                        "08 : 10 : 00",
-                        "17 : 05 : 00",
-                      ),
-                      _buildHistoryCard(
-                        "10",
-                        "Wednesday",
-                        "08 : 00 : 00",
-                        "17 : 00 : 00",
-                      ),
-                      const SizedBox(height: 80),
-                    ],
+                        const SizedBox(height: 8),
+                        ...attendanceHistory.map((item) {
+                          String date = item.attendanceDate.day
+                              .toString()
+                              .padLeft(2, '0');
+                          String month = DateFormat(
+                            'MMMM',
+                          ).format(item.attendanceDate);
+                          String checkIn = item.checkInTime ?? "-- : -- : --";
+                          String checkOut = item.checkOutTime ?? "-- : -- : --";
+                          return _buildHistoryCard(
+                            date,
+                            month,
+                            checkIn,
+                            checkOut,
+                          );
+                        }).toList(),
+                        const SizedBox(height: 80),
+                      ],
+                    ),
                   ),
                 ),
-              ),
+
+                Positioned(
+                  top: -40,
+                  left: 16,
+                  right: 16,
+                  child: _buildAttendanceCard(),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -264,38 +254,38 @@ class _HomeScreenState extends State<HomeScreen> {
     final formattedTime = DateFormat('HH : mm : ss').format(_now);
     final formattedDay = DateFormat('EEEE, dd MMMM yyyy').format(_now);
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFEDEBFA),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 2)),
-        ],
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.access_time, size: 32, color: Colors.black87),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                formattedDay,
-                style: const TextStyle(fontSize: 13, color: Colors.black54),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                formattedTime,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
+    return Material(
+      elevation: 6,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color(0xFFEDEBFA),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.access_time, size: 32, color: Colors.black87),
+            const SizedBox(width: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  formattedDay,
+                  style: const TextStyle(fontSize: 13, color: Colors.black54),
                 ),
-              ),
-            ],
-          ),
-        ],
+                const SizedBox(height: 4),
+                Text(
+                  formattedTime,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -335,7 +325,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 checkInTime != null
                     ? DateFormat('HH : mm : ss').format(checkInTime!)
                     : "-- : -- : --",
-                showButton: true,
                 onPressed: () async {
                   final result =
                       await Navigator.pushNamed(context, CheckinScreen.id)
@@ -356,19 +345,23 @@ class _HomeScreenState extends State<HomeScreen> {
                 checkOutTime != null
                     ? DateFormat('HH : mm : ss').format(checkOutTime!)
                     : "-- : -- : --",
-                showButton: true,
                 onPressed: () async {
                   final result =
                       await Navigator.pushNamed(context, CheckOutScreen.id)
                           as Map<String, dynamic>?;
 
                   if (result != null && result['checkOutTime'] != null) {
-                    setState(() {
-                      checkOutTime = DateFormat(
-                        'HH:mm',
-                      ).parse(result['checkOutTime']);
-                    });
+                    try {
+                      String rawTime = result['checkOutTime'];
+                      checkOutTime =
+                          rawTime.split(':').length == 2
+                              ? DateFormat('HH:mm').parse(rawTime)
+                              : DateFormat('HH:mm:ss').parse(rawTime);
+                    } catch (e) {
+                      print("Gagal parsing checkOutTime: $e");
+                    }
                     getCurrentLocation();
+                    setState(() {});
                   }
                 },
               ),
@@ -379,16 +372,11 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildTimeBox(
-    String label,
-    String time, {
-    bool showButton = false,
-    VoidCallback? onPressed,
-  }) {
+  Widget _buildTimeBox(String label, String time, {VoidCallback? onPressed}) {
     return Expanded(
       child: Container(
         height: 140,
-        margin: const EdgeInsets.symmetric(horizontal: 2),
+        margin: const EdgeInsets.symmetric(horizontal: 4),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: const Color(0xFFEDEBFA),
@@ -414,7 +402,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            if (showButton)
+            if (onPressed != null)
               GestureDetector(
                 onTap: onPressed,
                 child: Container(

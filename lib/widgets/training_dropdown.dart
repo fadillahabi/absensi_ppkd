@@ -15,23 +15,39 @@ class TrainingDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isSelectedValueValid =
+        selectedValue != null &&
+        trainingOptions.any((t) => t.id == selectedValue);
+
     return DropdownButtonFormField<int>(
-      value: selectedValue,
+      isExpanded: true, // ⬅️ penting untuk menghindari overflow
+      value: isSelectedValueValid ? selectedValue : null,
       items:
           trainingOptions.map((training) {
             return DropdownMenuItem<int>(
               value: training.id,
-              child: Text(training.title),
+              child: Text(
+                training.title,
+                style: const TextStyle(fontSize: 14),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
             );
           }).toList(),
       decoration: InputDecoration(
         filled: true,
         fillColor: Colors.white,
         hintText: 'Pilih Training',
-        prefixIcon: const Icon(Icons.school),
+        prefixIcon: const Icon(Icons.school, size: 20),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 12,
+        ),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       ),
       onChanged: onChanged,
+      validator:
+          (value) => value == null ? 'Pilih training terlebih dahulu' : null,
     );
   }
 }

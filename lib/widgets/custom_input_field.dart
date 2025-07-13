@@ -25,7 +25,8 @@ class CustomInputField extends StatelessWidget {
         filled: true,
         fillColor: Colors.white,
         hintText: hintText,
-        prefixIcon: Icon(icon),
+        prefixIcon: Icon(icon, size: 20),
+        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );

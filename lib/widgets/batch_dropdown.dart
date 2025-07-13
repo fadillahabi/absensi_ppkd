@@ -21,14 +21,15 @@ class BatchDropdown extends StatelessWidget {
           batchOptions.map((batch) {
             return DropdownMenuItem<int>(
               value: batch.id,
-              child: Text(batch.batchKe),
+              child: Text(batch.batchKe, style: TextStyle(fontSize: 14)),
             );
           }).toList(),
       decoration: InputDecoration(
         filled: true,
         fillColor: Colors.white,
         hintText: 'Pilih Batch',
-        prefixIcon: const Icon(Icons.list_alt),
+        prefixIcon: Icon(Icons.list_alt, size: 20),
+        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       ),
       onChanged: onChanged,

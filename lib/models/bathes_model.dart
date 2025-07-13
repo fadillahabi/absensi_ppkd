@@ -56,9 +56,12 @@ class BatchesData {
     endDate: DateTime.parse(json["end_date"]),
     createdAt: DateTime.parse(json["created_at"]),
     updatedAt: DateTime.parse(json["updated_at"]),
-    trainings: List<Training>.from(
-      json["trainings"].map((x) => Training.fromJson(x)),
-    ),
+    trainings:
+        json["trainings"] != null
+            ? List<Training>.from(
+              json["trainings"].map((x) => Training.fromJson(x)),
+            )
+            : [],
   );
 
   Map<String, dynamic> toJson() => {

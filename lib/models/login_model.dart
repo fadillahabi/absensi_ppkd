@@ -4,6 +4,9 @@
 
 import 'dart:convert';
 
+import 'package:ppkd_flutter/models/bathes_model.dart';
+import 'package:ppkd_flutter/models/trainings_model.dart';
+
 LoginResponse loginResponseFromJson(String str) =>
     LoginResponse.fromJson(json.decode(str));
 
@@ -43,8 +46,10 @@ class UserLogin {
   final dynamic emailVerifiedAt;
   final DateTime? createdAt;
   final DateTime? updatedAt;
-
   final String? profilePhotoUrl;
+
+  final BatchesData? batch; // ✅ Tambahan
+  final DataTrainings? training; // ✅ Tambahan
 
   UserLogin({
     this.id,
@@ -55,6 +60,8 @@ class UserLogin {
     this.createdAt,
     this.updatedAt,
     this.profilePhotoUrl,
+    this.batch, // ✅ Tambahan
+    this.training, // ✅ Tambahan
   });
 
   factory UserLogin.fromJson(Map<String, dynamic> json) => UserLogin(
@@ -71,6 +78,14 @@ class UserLogin {
         json["profile_photo"] != null
             ? "https://appabsensi.mobileprojp.com/public/${json["profile_photo"]}"
             : null,
+    batch:
+        json["batch"] != null
+            ? BatchesData.fromJson(json["batch"])
+            : null, // ✅ Tambahan
+    training:
+        json["training"] != null
+            ? DataTrainings.fromJson(json["training"])
+            : null, // ✅ Tambahan
   );
 
   Map<String, dynamic> toJson() => {
@@ -82,5 +97,7 @@ class UserLogin {
     "created_at": createdAt?.toIso8601String(),
     "updated_at": updatedAt?.toIso8601String(),
     "profile_photo_url": profilePhotoUrl,
+    "batch": batch?.toJson(), // ✅ Tambahan
+    "training": training?.toJson(), // ✅ Tambahan
   };
 }

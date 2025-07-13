@@ -13,6 +13,8 @@ class GenderSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    double width = MediaQuery.of(context).size.width;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -24,41 +26,62 @@ class GenderSelector extends StatelessWidget {
             fontWeight: FontWeight.w500,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
         Row(
           children: [
-            Expanded(child: _genderTile('L', 'Laki-laki')),
+            _buildGenderTile(context, 'L', 'Laki-laki', Icons.male),
             const SizedBox(width: 12),
-            Expanded(child: _genderTile('P', 'Perempuan')),
+            _buildGenderTile(context, 'P', 'Perempuan', Icons.female),
           ],
         ),
       ],
     );
   }
 
-  Widget _genderTile(String value, String label) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color:
-              selectedGender == value
-                  ? AppColor.purpleMain
-                  : Colors.grey.shade300,
-          width: 2,
+  Widget _buildGenderTile(
+    BuildContext context,
+    String value,
+    String label,
+    IconData icon,
+  ) {
+    final isSelected = selectedGender == value;
+    final theme = Theme.of(context);
+    final textColor = isSelected ? Colors.white : Colors.black87;
+
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => onChanged(value),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          height: 60,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color: isSelected ? AppColor.purpleMain : Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected ? AppColor.purpleMain : Colors.grey.shade300,
+              width: 2,
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: textColor, size: 20),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: textColor,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-      child: RadioListTile<String>(
-        value: value,
-        groupValue: selectedGender,
-        title: Text(
-          label,
-          style: const TextStyle(color: Colors.black, fontSize: 16),
-        ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-        dense: true,
-        onChanged: onChanged,
       ),
     );
   }

@@ -59,19 +59,34 @@ Future<CheckOutResponse?> checkOut({
 }) async {
   final token = await PreferencesOTI.getToken();
 
+  final now = DateTime.now();
+  final dateNow = now.toIso8601String().split('T')[0]; // yyyy-MM-dd
+  final timeNow =
+      "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}"; // HH:mm
+
+  print(
+    "Sending checkout with lat: $latitude, lng: $longitude, address: $address",
+  );
+  print("Token: $token");
+
   final response = await http.post(
-    Uri.parse("https://appabsensi.mobileprojp.com/api/attendances/checkout"),
+    Uri.parse(Endpoint.checkOut),
     headers: {
       "Authorization": "Bearer $token",
       "Content-Type": "application/json",
       "Accept": "application/json",
     },
     body: jsonEncode({
-      "check_out_latitude": latitude,
-      "check_out_longitude": longitude,
+      "attendance_date": dateNow,
+      "check_out": timeNow,
+      "check_out_lat": latitude,
+      "check_out_lng": longitude,
       "check_out_address": address,
     }),
   );
+
+  print("Status Code: ${response.statusCode}");
+  print("Response: ${response.body}");
 
   if (response.statusCode == 200) {
     final json = jsonDecode(response.body);

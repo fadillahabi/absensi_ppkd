@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:ppkd_flutter/helper/shared_preference.dart';
-import 'package:ppkd_flutter/sevices/auth_services.dart';
+import 'package:ppkd_flutter/services/auth_services.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});

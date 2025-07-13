@@ -6,7 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:ppkd_flutter/constant/app_color.dart';
 import 'package:ppkd_flutter/models/bathes_model.dart';
 import 'package:ppkd_flutter/models/trainings_model.dart';
-import 'package:ppkd_flutter/sevices/auth_services.dart';
+import 'package:ppkd_flutter/services/auth_services.dart';
 import 'package:ppkd_flutter/view/auth_screen/login_screen.dart';
 import 'package:ppkd_flutter/widgets/batch_dropdown.dart';
 import 'package:ppkd_flutter/widgets/custom_input_field.dart';
@@ -48,9 +48,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
     try {
       final batches = await UserApi.getBatches();
       final trainings = await UserApi.getTrainings();
+
+      // Tambahkan ini untuk debugging
+      print("Training dari API:");
+      for (var t in trainings) {
+        print("${t.id}: ${t.title}");
+      }
+
       setState(() {
         _batchOptions = batches;
         _trainingOptions = trainings;
+        if (!_trainingOptions.any((t) => t.id == trainingId)) {
+          trainingId = null;
+        }
       });
     } catch (_) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -76,9 +86,25 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
-    setState(() => _isLoading = true);
+    if (batchId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Harap pilih Batch terlebih dahulu")),
+      );
+      setState(() => _isLoading = false);
+      return;
+    }
+
+    if (trainingId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Harap pilih Training terlebih dahulu")),
+      );
+      setState(() => _isLoading = false);
+      return;
+    }
 
     try {
+      print("Training ID yang dikirim: $trainingId"); // 👈 Tambahkan di sini
+      print("Batch ID yang dikirim: $batchId");
       await UserApi.registerUser(
         name: name,
         email: email,
@@ -151,7 +177,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 GestureDetector(
                   onTap: _pickImage,
                   child: CircleAvatar(
-                    radius: 50,
+                    radius: 40,
                     backgroundColor: Colors.grey.shade300,
                     backgroundImage:
                         profilePhotoBase64 != null
@@ -163,7 +189,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         profilePhotoBase64 == null
                             ? const Icon(
                               Icons.camera_alt,
-                              size: 40,
+                              size: 28,
                               color: Colors.grey,
                             )
                             : null,

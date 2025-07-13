@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:ppkd_flutter/sevices/attendant_services.dart';
+import 'package:ppkd_flutter/services/attendant_services.dart';
 
 class CheckOutScreen extends StatefulWidget {
   const CheckOutScreen({super.key});
@@ -16,7 +16,7 @@ class CheckOutScreen extends StatefulWidget {
 
 class _CheckOutScreenState extends State<CheckOutScreen> {
   GoogleMapController? mapController;
-  final LatLng _ppkdCenter = const LatLng(-6.2109, 106.8129);
+  final LatLng _ppkdCenter = const LatLng(-6.293060, 106.890685);
   String currentAddress = "Memuat alamat...";
   double? currentDistance;
   bool isInRange = false;
@@ -262,17 +262,8 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
 
                           setState(() => _isLoading = false);
 
-                          if (!mounted) return;
-
-                          if (response != null) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  response.message ?? "Berhasil check out",
-                                ),
-                              ),
-                            );
-
+                          if (response != null &&
+                              response.data.checkOutTime != null) {
                             Navigator.pop(context, {
                               'checkOutTime': response.data.checkOutTime,
                               'status': response.data.status,
@@ -288,6 +279,7 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                           }
                         }
                         : null,
+
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF5A32DC),
                   foregroundColor: Colors.white,

@@ -8,10 +8,10 @@ class Endpoint {
   static const String profile = "$baseUrlApi/profile";
   static const String updateProfile = "$baseUrlApi/profile";
   static const String checkIn = "$baseUrlApi/absen/check-in";
-  static final String checkOut = '$baseUrl/absen/check-out';
-  static final String allHistoryAbsen = '$baseUrl/absen/history';
-  static final String statAbsen = '$baseUrl/absen/stats';
-  static final String permission = '$baseUrl/izin';
+  static final String checkOut = '$baseUrlApi/absen/check-out';
+  static final String allHistoryAbsen = '$baseUrlApi/absen/history';
+  static final String statAbsen = '$baseUrlApi/absen/stats';
+  static final String permission = '$baseUrlApi/izin';
   static String todayAbsen(String attendanceDate) =>
-      '$baseUrl/absen/today?attendance_date=$attendanceDate';
+      '$baseUrlApi/absen/today?attendance_date=$attendanceDate';
 }

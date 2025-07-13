@@ -29,15 +29,19 @@ class _CustomPasswordFieldState extends State<CustomPasswordField> {
         filled: true,
         fillColor: Colors.white,
         hintText: 'Password',
-        prefixIcon: const Icon(Icons.lock_outline),
+        prefixIcon: const Icon(Icons.lock_outline, size: 20),
         suffixIcon: IconButton(
-          icon: Icon(_obscureText ? Icons.visibility_off : Icons.visibility),
+          icon: Icon(
+            _obscureText ? Icons.visibility_off : Icons.visibility,
+            size: 20,
+          ),
           onPressed: () {
             setState(() {
               _obscureText = !_obscureText;
             });
           },
         ),
+        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );

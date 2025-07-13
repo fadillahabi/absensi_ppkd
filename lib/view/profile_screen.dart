@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ppkd_flutter/helper/shared_preference.dart';
 import 'package:ppkd_flutter/models/login_model.dart'; // Model user
-import 'package:ppkd_flutter/sevices/auth_services.dart';
+import 'package:ppkd_flutter/services/auth_services.dart';
 import 'package:ppkd_flutter/view/edit_profile_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -73,7 +73,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(50),
                         child:
-                            (user.profilePhotoUrl != null)
+                            (user.profilePhotoUrl != null &&
+                                    user.profilePhotoUrl!.isNotEmpty)
                                 ? Image.network(
                                   "${user.profilePhotoUrl}?t=${DateTime.now().millisecondsSinceEpoch}",
                                   fit: BoxFit.cover,
@@ -96,10 +97,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         color: Colors.grey,
                                       ),
                                 )
-                                : const Center(
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
+                                : const Icon(
+                                  Icons.person,
+                                  size: 32,
+                                  color: Colors.grey,
                                 ),
                       ),
                     ),
