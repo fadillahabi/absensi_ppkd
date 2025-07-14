@@ -1,14 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:intl/date_symbol_data_local.dart'; // ⬅️ Tambahkan ini
 import 'package:ppkd_flutter/constant/app_color.dart';
+import 'package:ppkd_flutter/view/attendance_screen/chechkout_screen.dart';
+import 'package:ppkd_flutter/view/attendance_screen/checkin_screen.dart';
+import 'package:ppkd_flutter/view/auth_screen/change_password_screen.dart';
+import 'package:ppkd_flutter/view/auth_screen/forgot_password_screen.dart';
 import 'package:ppkd_flutter/view/auth_screen/login_screen.dart';
 import 'package:ppkd_flutter/view/auth_screen/register_screen.dart';
-import 'package:ppkd_flutter/view/chechkout_screen.dart';
-import 'package:ppkd_flutter/view/checkin_screen.dart';
-import 'package:ppkd_flutter/view/edit_profile_screen.dart';
+import 'package:ppkd_flutter/view/profile_screen/edit_profile_screen.dart';
 import 'package:ppkd_flutter/view/splash_screen.dart';
 import 'package:ppkd_flutter/widgets/buttom_navbar.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting(
+    'id_ID',
+    null,
+  ); // ⬅️ Tambahkan inisialisasi locale di sini
+
   runApp(const MyApp());
 }
 
@@ -27,6 +36,9 @@ class MyApp extends StatelessWidget {
         EditProfileScreen.id: (context) => const EditProfileScreen(),
         CheckinScreen.id: (context) => const CheckinScreen(),
         CheckOutScreen.id: (context) => const CheckOutScreen(),
+        ChangePasswordScreen.id:
+            (context) => ChangePasswordScreen(email: 'user@email.com'),
+        ForgotPasswordScreen.id: (context) => ForgotPasswordScreen(),
       },
       onGenerateRoute: (settings) {
         if (settings.name == CustomButtonNavBar.id) {

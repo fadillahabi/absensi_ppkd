@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
@@ -9,8 +10,8 @@ import 'package:ppkd_flutter/models/absen_history_model.dart';
 import 'package:ppkd_flutter/models/login_model.dart';
 import 'package:ppkd_flutter/services/absen_services.dart';
 import 'package:ppkd_flutter/services/auth_services.dart';
-import 'package:ppkd_flutter/view/chechkout_screen.dart';
-import 'package:ppkd_flutter/view/checkin_screen.dart';
+import 'package:ppkd_flutter/view/attendance_screen/chechkout_screen.dart';
+import 'package:ppkd_flutter/view/attendance_screen/checkin_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -39,20 +40,6 @@ class _HomeScreenState extends State<HomeScreen> {
     fetchAttendanceHistory();
   }
 
-  Future<void> fetchAttendanceHistory() async {
-    final token = await PreferencesOTI.getToken();
-    if (token == null) return;
-
-    try {
-      final history = await AbsenServices.fetchAbsenHistory(token);
-      setState(() {
-        attendanceHistory = history;
-      });
-    } catch (e) {
-      print("Gagal mengambil data riwayat absen: $e");
-    }
-  }
-
   void _startClock() {
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       setState(() {
@@ -65,6 +52,18 @@ class _HomeScreenState extends State<HomeScreen> {
   void dispose() {
     _timer?.cancel();
     super.dispose();
+  }
+
+  Future<void> _handleRefresh() async {
+    await fetchUserProfile();
+    await getCurrentLocation();
+    await fetchAttendanceHistory();
+
+    if (mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Data berhasil diperbarui")));
+    }
   }
 
   Future<void> fetchUserProfile() async {
@@ -106,6 +105,92 @@ class _HomeScreenState extends State<HomeScreen> {
         currentAddress = "Gagal mengambil lokasi";
       });
     }
+  }
+
+  Future<void> fetchAttendanceHistory() async {
+    final token = await PreferencesOTI.getToken();
+    if (token == null) return;
+
+    try {
+      final history = await AbsenServices.fetchAbsenHistory(token);
+      setState(() {
+        attendanceHistory = history;
+      });
+    } catch (e) {
+      print("Gagal mengambil data riwayat absen: $e");
+    }
+  }
+
+  Future<void> ajukanIzin() async {
+    final token = await PreferencesOTI.getToken();
+    if (token == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Token tidak tersedia.")));
+      return;
+    }
+
+    final TextEditingController alasanController = TextEditingController();
+
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Ajukan Izin"),
+          content: TextField(
+            controller: alasanController,
+            maxLines: 3,
+            decoration: const InputDecoration(
+              hintText: "Masukkan alasan izin...",
+              border: OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Batal"),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final alasan = alasanController.text.trim();
+                if (alasan.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Alasan tidak boleh kosong.")),
+                  );
+                  return;
+                }
+
+                try {
+                  final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+
+                  final response = await AbsenServices.submitIzin(
+                    token: token,
+                    date: today,
+                    alasanIzin: alasan,
+                  );
+
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text(response.message)));
+                  }
+
+                  await fetchAttendanceHistory();
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("Gagal mengajukan izin: $e")),
+                    );
+                  }
+                }
+              },
+              child: const Text("Kirim"),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -180,62 +265,68 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
-
           Expanded(
             child: Stack(
               clipBehavior: Clip.none,
               children: [
                 Container(
-                  // padding: const EdgeInsets.only(top: 60),
                   decoration: const BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.vertical(
                       top: Radius.circular(32),
                     ),
                   ),
-                  child: SingleChildScrollView(
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 60),
-                        _buildLocationAndTime(),
-                        const SizedBox(height: 20),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          child: Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              "Riwayat Kehadiran",
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                                color: AppColor.purpleMain,
+                  child: RefreshIndicator(
+                    onRefresh: _handleRefresh,
+                    color: AppColor.purpleMain,
+                    backgroundColor: Colors.white,
+                    displacement: 30,
+                    edgeOffset: 10,
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: Column(
+                        children: [
+                          const SizedBox(height: 60),
+                          _buildLocationAndTime(),
+                          const SizedBox(height: 20),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                "Riwayat Kehadiran",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  color: AppColor.purpleMain,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 8),
-                        ...attendanceHistory.map((item) {
-                          String date = item.attendanceDate.day
-                              .toString()
-                              .padLeft(2, '0');
-                          String month = DateFormat(
-                            'MMMM',
-                          ).format(item.attendanceDate);
-                          String checkIn = item.checkInTime ?? "-- : -- : --";
-                          String checkOut = item.checkOutTime ?? "-- : -- : --";
-                          return _buildHistoryCard(
-                            date,
-                            month,
-                            checkIn,
-                            checkOut,
-                          );
-                        }).toList(),
-                        const SizedBox(height: 80),
-                      ],
+                          const SizedBox(height: 8),
+                          ...attendanceHistory.map((item) {
+                            String date = item.attendanceDate.day
+                                .toString()
+                                .padLeft(2, '0');
+                            String month = DateFormat(
+                              'MMMM',
+                            ).format(item.attendanceDate);
+                            String checkIn = item.checkInTime ?? "-- : -- : --";
+                            String checkOut =
+                                item.checkOutTime ?? "-- : -- : --";
+                            return _buildHistoryCard(
+                              date,
+                              month,
+                              checkIn,
+                              checkOut,
+                            );
+                          }),
+                          const SizedBox(height: 80),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-
                 Positioned(
                   top: -40,
                   left: 16,
@@ -291,6 +382,15 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildLocationAndTime() {
+    final formattedCheckIn =
+        checkInTime != null
+            ? DateFormat('HH : mm : ss').format(checkInTime!)
+            : "-- : -- : --";
+    final formattedCheckOut =
+        checkOutTime != null
+            ? DateFormat('HH : mm : ss').format(checkOutTime!)
+            : "-- : -- : --";
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       padding: const EdgeInsets.all(16),
@@ -321,51 +421,76 @@ class _HomeScreenState extends State<HomeScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _buildTimeBox(
-                "Check In",
-                checkInTime != null
-                    ? DateFormat('HH : mm : ss').format(checkInTime!)
-                    : "-- : -- : --",
-                onPressed: () async {
-                  final result =
-                      await Navigator.pushNamed(context, CheckinScreen.id)
-                          as Map<String, dynamic>?;
+                "Clock In",
+                formattedCheckIn,
+                onPressed:
+                    checkInTime == null
+                        ? () async {
+                          final result =
+                              await Navigator.pushNamed(
+                                    context,
+                                    CheckinScreen.id,
+                                  )
+                                  as Map<String, dynamic>?;
 
-                  if (result != null && result['checkInTime'] != null) {
-                    setState(() {
-                      checkInTime = DateFormat(
-                        'HH:mm',
-                      ).parse(result['checkInTime']);
-                    });
-                    getCurrentLocation();
-                  }
-                },
+                          if (result != null && result['checkInTime'] != null) {
+                            setState(() {
+                              checkInTime = DateFormat(
+                                'HH:mm',
+                              ).parse(result['checkInTime']);
+                            });
+                            getCurrentLocation();
+                          }
+                        }
+                        : null,
               ),
               _buildTimeBox(
-                "Check Out",
-                checkOutTime != null
-                    ? DateFormat('HH : mm : ss').format(checkOutTime!)
-                    : "-- : -- : --",
-                onPressed: () async {
-                  final result =
-                      await Navigator.pushNamed(context, CheckOutScreen.id)
-                          as Map<String, dynamic>?;
+                "Clock Out",
+                formattedCheckOut,
+                onPressed:
+                    (checkInTime != null && checkOutTime == null)
+                        ? () async {
+                          final result =
+                              await Navigator.pushNamed(
+                                    context,
+                                    CheckOutScreen.id,
+                                  )
+                                  as Map<String, dynamic>?;
 
-                  if (result != null && result['checkOutTime'] != null) {
-                    try {
-                      String rawTime = result['checkOutTime'];
-                      checkOutTime =
-                          rawTime.split(':').length == 2
-                              ? DateFormat('HH:mm').parse(rawTime)
-                              : DateFormat('HH:mm:ss').parse(rawTime);
-                    } catch (e) {
-                      print("Gagal parsing checkOutTime: $e");
-                    }
-                    getCurrentLocation();
-                    setState(() {});
-                  }
-                },
+                          if (result != null &&
+                              result['checkOutTime'] != null) {
+                            try {
+                              checkOutTime = DateFormat(
+                                'HH:mm:ss',
+                              ).parse(result['checkOutTime']);
+                            } catch (e) {
+                              print("Gagal parsing checkOutTime: $e");
+                            }
+                            getCurrentLocation();
+                            setState(() {});
+                          }
+                        }
+                        : null,
               ),
             ],
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: ajukanIzin,
+              icon: const Icon(Icons.edit_calendar, color: Colors.white),
+              label: const Text("Ajukan Izin"),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColor.purpleMain,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                textStyle: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
           ),
         ],
       ),

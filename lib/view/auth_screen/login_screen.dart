@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:ppkd_flutter/constant/app_color.dart';
 import 'package:ppkd_flutter/helper/shared_preference.dart';
 import 'package:ppkd_flutter/services/auth_services.dart';
+import 'package:ppkd_flutter/view/auth_screen/forgot_password_screen.dart';
 import 'package:ppkd_flutter/view/auth_screen/register_screen.dart';
 import 'package:ppkd_flutter/widgets/buttom_navbar.dart';
 import 'package:ppkd_flutter/widgets/custom_input_field.dart';
@@ -51,7 +52,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   vertical: 32,
                 ),
                 child: ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: 400),
+                  constraints: const BoxConstraints(maxWidth: 400),
                   child: Form(
                     key: _formKey,
                     child: Column(
@@ -104,7 +105,12 @@ class _LoginScreenState extends State<LoginScreen> {
                         Align(
                           alignment: Alignment.centerRight,
                           child: TextButton(
-                            onPressed: () {},
+                            onPressed: () {
+                              Navigator.pushNamed(
+                                context,
+                                ForgotPasswordScreen.id,
+                              );
+                            },
                             child: const Text(
                               "Lupa Sandi?",
                               style: TextStyle(color: AppColor.cyanText),
@@ -126,6 +132,41 @@ class _LoginScreenState extends State<LoginScreen> {
                                 await PreferencesOTI.saveLoginSession();
 
                                 if (!mounted) return;
+
+                                // ✅ Snackbar berhasil login
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Row(
+                                      children: const [
+                                        Icon(
+                                          Icons.check_circle,
+                                          color: Colors.white,
+                                        ),
+                                        SizedBox(width: 10),
+                                        Expanded(
+                                          child: Text(
+                                            'Berhasil login! Selamat datang kembali 👋',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    backgroundColor: Colors.green[600],
+                                    behavior: SnackBarBehavior.floating,
+                                    margin: const EdgeInsets.all(16),
+                                    duration: const Duration(seconds: 2),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                );
+
+                                await Future.delayed(
+                                  const Duration(milliseconds: 800),
+                                );
+
                                 Navigator.pushReplacementNamed(
                                   context,
                                   CustomButtonNavBar.id,
@@ -165,7 +206,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         const SizedBox(height: 16),
 
-                        // Tombol Google
                         OutlinedButton.icon(
                           onPressed: () {},
                           icon: Image.asset(
@@ -201,7 +241,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
                         const SizedBox(height: 10),
 
-                        // Tombol Facebook
                         OutlinedButton.icon(
                           onPressed: () {},
                           icon: const Icon(

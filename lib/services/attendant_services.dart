@@ -12,42 +12,36 @@ Future<CheckInResponse?> checkIn({
   required double longitude,
   required String address,
 }) async {
-  final token = await PreferencesOTI.getToken(); // Pastikan token valid
+  final token = await PreferencesOTI.getToken();
+  final url = Uri.parse(Endpoint.checkIn);
 
-  // Format waktu dan tanggal saat ini
   final now = DateTime.now();
   final dateNow = now.toIso8601String().split('T')[0]; // yyyy-MM-dd
   final timeNow =
-      "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}";
+      "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}"; // HH:mm
 
   try {
     final response = await http.post(
-      Uri.parse(Endpoint.checkIn),
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode({
+      url,
+      headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
+      body: {
         'attendance_date': dateNow,
         'check_in': timeNow,
-        'check_in_lat': latitude,
-        'check_in_lng': longitude,
+        'check_in_lat': latitude.toString(),
+        'check_in_lng': longitude.toString(),
         'check_in_address': address,
-        'status': 'masuk',
-      }),
+      },
     );
 
-    print("Status Code: ${response.statusCode}");
-    print("Response Body: ${response.body}");
-
     if (response.statusCode == 200) {
-      return CheckInResponse.fromJson(json.decode(response.body));
+      final data = json.decode(response.body);
+      return CheckInResponse.fromJson(data);
     } else {
-      throw Exception('Gagal Check In: ${response.statusCode}');
+      print("Gagal check in: ${response.body}");
+      return null;
     }
   } catch (e) {
-    print("Check In Error: $e");
+    print("Error saat check in: $e");
     return null;
   }
 }

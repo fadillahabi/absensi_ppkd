@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:ppkd_flutter/helper/shared_preference.dart';
 import 'package:ppkd_flutter/models/login_model.dart'; // Model user
 import 'package:ppkd_flutter/services/auth_services.dart';
-import 'package:ppkd_flutter/view/edit_profile_screen.dart';
+import 'package:ppkd_flutter/view/auth_screen/change_password_screen.dart';
+import 'package:ppkd_flutter/view/profile_screen/edit_profile_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -154,7 +155,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 text: "Ubah Kata Sandi",
                 iconColor: Colors.green,
                 onTap: () {
-                  Navigator.pushNamed(context, "/change_password_screen");
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder:
+                          (context) =>
+                              ChangePasswordScreen(email: 'user@gmail.com'),
+                    ),
+                  );
                 },
               ),
               _buildMenuItem(

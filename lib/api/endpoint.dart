@@ -12,6 +12,9 @@ class Endpoint {
   static final String allHistoryAbsen = '$baseUrlApi/absen/history';
   static final String statAbsen = '$baseUrlApi/absen/stats';
   static final String permission = '$baseUrlApi/izin';
+  static final String resetPassword = '$baseUrlApi/reset-password';
+  static final String forgotPassword = '$baseUrlApi/forgot-password';
+  static String deleteAbsen(int id) => '$baseUrlApi/absen/$id';
   static String todayAbsen(String attendanceDate) =>
       '$baseUrlApi/absen/today?attendance_date=$attendanceDate';
 }

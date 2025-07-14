@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ppkd_flutter/constant/app_color.dart';
 import 'package:ppkd_flutter/view/history_screen.dart';
 import 'package:ppkd_flutter/view/home_screen.dart';
-import 'package:ppkd_flutter/view/profile_screen.dart';
+import 'package:ppkd_flutter/view/profile_screen/profile_screen.dart';
 
 class CustomButtonNavBar extends StatefulWidget {
   final int currentIndex;

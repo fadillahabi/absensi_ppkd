@@ -1,4 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:intl/intl.dart';
+import 'package:ppkd_flutter/constant/app_color.dart';
+import 'package:ppkd_flutter/helper/shared_preference.dart';
+import 'package:ppkd_flutter/models/absen_history_model.dart';
+import 'package:ppkd_flutter/services/absen_services.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
@@ -9,7 +15,8 @@ class HistoryScreen extends StatefulWidget {
 }
 
 class _HistoryScreenState extends State<HistoryScreen> {
-  String selectedMonth = 'Juli'; // default saat pertama kali dibuka
+  String selectedMonth = DateFormat('MMMM', 'id_ID').format(DateTime.now());
+
   final List<String> months = [
     'Januari',
     'Februari',
@@ -25,24 +32,51 @@ class _HistoryScreenState extends State<HistoryScreen> {
     'Desember',
   ];
 
-  final List<Map<String, String>> dummyAttendance = List.generate(
-    4,
-    (index) => {
-      'date': '13',
-      'day': 'Monday',
-      'checkIn': '07 : 50 : 00',
-      'checkOut': '17 : 50 : 00',
-    },
-  );
+  List<HistoryAbsenData> historyData = [];
+
+  @override
+  void initState() {
+    super.initState();
+    initializeDateFormatting('id_ID').then((_) {
+      setState(() {
+        selectedMonth = DateFormat('MMMM', 'id_ID').format(DateTime.now());
+      });
+      fetchHistory();
+    });
+  }
+
+  Future<void> fetchHistory() async {
+    final token = await PreferencesOTI.getToken();
+    if (token == null) return;
+
+    try {
+      final data = await AbsenServices.fetchAbsenHistory(token);
+      setState(() {
+        historyData = data;
+      });
+    } catch (e) {
+      debugPrint('Gagal memuat history absen: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final filteredData =
+        historyData.where((item) {
+          final monthName = DateFormat(
+            'MMMM',
+            'id_ID',
+          ).format(item.attendanceDate);
+          return monthName == selectedMonth;
+        }).toList();
+
     return Scaffold(
       backgroundColor: Colors.grey[100],
       body: Column(
         children: [
           _buildMonthSelector(),
-          const SizedBox(height: 16),
+          _buildSummaryStats(filteredData),
+          const SizedBox(height: 8),
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 20),
             child: Align(
@@ -59,13 +93,38 @@ class _HistoryScreenState extends State<HistoryScreen> {
           ),
           const SizedBox(height: 8),
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              itemCount: dummyAttendance.length,
-              itemBuilder: (context, index) {
-                return _buildAttendanceCard(dummyAttendance[index]);
-              },
-            ),
+            child:
+                filteredData.isEmpty
+                    ? const Center(child: Text("Tidak ada data absen."))
+                    : ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      itemCount: filteredData.length,
+                      itemBuilder: (context, index) {
+                        final item = filteredData[index];
+                        final day = DateFormat(
+                          'EEEE',
+                          'id_ID',
+                        ).format(item.attendanceDate);
+                        final date = DateFormat(
+                          'dd',
+                        ).format(item.attendanceDate);
+
+                        if (item.status == Status.IZIN) {
+                          return _buildIzinCard(
+                            date: date,
+                            day: day,
+                            alasan: item.alasanIzin ?? "-",
+                          );
+                        }
+
+                        return _buildAttendanceCard(
+                          date: date,
+                          day: day,
+                          checkIn: item.checkInTime ?? '-',
+                          checkOut: item.checkOutTime ?? '-',
+                        );
+                      },
+                    ),
           ),
         ],
       ),
@@ -76,7 +135,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
       decoration: const BoxDecoration(
-        color: Color(0xFF5A32DC),
+        color: AppColor.purpleMain,
         borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(32),
           bottomRight: Radius.circular(32),
@@ -111,7 +170,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         month,
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
-                          color: isSelected ? Color(0xFF5A32DC) : Colors.white,
+                          color:
+                              isSelected ? AppColor.purpleMain : Colors.white,
                         ),
                       ),
                     ),
@@ -123,7 +183,55 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
-  Widget _buildAttendanceCard(Map<String, String> item) {
+  Widget _buildSummaryStats(List<HistoryAbsenData> data) {
+    int hadir = data.where((d) => d.status == Status.MASUK).length;
+    int izin = data.where((d) => d.status == Status.IZIN).length;
+    int total = data.length;
+    int kosong = total - hadir - izin;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          _buildStatCard("Hadir", hadir, Colors.green),
+          _buildStatCard("Izin", izin, Colors.orange),
+          _buildStatCard("Kosong", kosong, Colors.grey),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatCard(String label, int count, Color color) {
+    return Container(
+      width: 100,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          Text(
+            "$count",
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+          Text(label, style: TextStyle(fontSize: 12, color: color)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAttendanceCard({
+    required String date,
+    required String day,
+    required String checkIn,
+    required String checkOut,
+  }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
@@ -132,7 +240,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black12.withOpacity(0.06),
+            color: Colors.black12.withAlpha(20),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -140,44 +248,86 @@ class _HistoryScreenState extends State<HistoryScreen> {
       ),
       child: Row(
         children: [
-          Container(
-            width: 70,
-            height: 70,
-            decoration: BoxDecoration(
-              color: Color(0xFFEAEAFE),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  item['date'] ?? '',
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF5A32DC),
-                  ),
-                ),
-                Text(
-                  item['day'] ?? '',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF5A32DC),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          _buildDateBox(date, day),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildCheckInfo("Check In", item['checkIn'] ?? '-'),
+                _buildCheckInfo("Check In", checkIn),
                 const SizedBox(height: 8),
-                _buildCheckInfo("Check Out", item['checkOut'] ?? '-'),
+                _buildCheckInfo("Check Out", checkOut),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildIzinCard({
+    required String date,
+    required String day,
+    required String alasan,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF4E5),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.orangeAccent),
+      ),
+      child: Row(
+        children: [
+          _buildDateBox(date, day),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "Izin",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.orange,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  alasan,
+                  style: const TextStyle(color: Colors.black87, fontSize: 14),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDateBox(String date, String day) {
+    return Container(
+      width: 70,
+      height: 70,
+      decoration: BoxDecoration(
+        color: const Color(0xFFEAEAFE),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            date,
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: AppColor.purpleMain,
+            ),
+          ),
+          Text(
+            day,
+            style: const TextStyle(fontSize: 12, color: AppColor.purpleMain),
           ),
         ],
       ),
@@ -193,7 +343,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           time,
           style: const TextStyle(
             fontWeight: FontWeight.w600,
-            color: Color(0xFF5A32DC),
+            color: AppColor.purpleMain,
           ),
         ),
       ],
