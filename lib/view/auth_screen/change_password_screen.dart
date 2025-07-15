@@ -29,6 +29,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   bool isLoading = false;
   bool isPasswordVisible = false;
   bool isConfirmPasswordVisible = false;
+  bool isResending = false;
 
   late Timer _timer;
   int _secondsRemaining = 600;
@@ -60,7 +61,6 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
               content: Text('Waktu habis, silakan kirim ulang OTP'),
             ),
           );
-          Navigator.pop(context);
         }
       }
     });
@@ -134,6 +134,9 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   }
 
   Future<void> resendOtp() async {
+    if (isResending) return;
+
+    setState(() => isResending = true);
     try {
       final result = await ForgotPasswordServices.requestOtp(widget.email);
       _timer.cancel();
@@ -157,6 +160,8 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
           ),
         );
       }
+    } finally {
+      if (mounted) setState(() => isResending = false);
     }
   }
 
@@ -181,21 +186,14 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 const SizedBox(height: 24),
                 const Text(
                   "Verification",
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  "Kode dikirim ke: ${widget.email}",
-                  style: const TextStyle(fontSize: 14, color: Colors.black54),
-                ),
+                Text("Kode dikirim ke: ${widget.email}"),
                 const SizedBox(height: 8),
                 Text(
                   "Waktu tersisa: $_timerText",
-                  style: TextStyle(fontSize: 14, color: AppColor.purpleMain),
+                  style: TextStyle(color: AppColor.purpleMain),
                 ),
                 const SizedBox(height: 32),
                 _buildOtpField(),
@@ -218,7 +216,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                             ),
                           )
                           : const Text(
-                            "VERIFY",
+                            "VERIFIKASI",
                             style: TextStyle(color: Colors.white),
                           ),
                   style: ElevatedButton.styleFrom(
@@ -234,25 +232,31 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 ),
                 const SizedBox(height: 20),
                 TextButton(
-                  onPressed: _secondsRemaining > 0 ? null : resendOtp,
-                  child: Text.rich(
-                    TextSpan(
-                      text: "Belum menerima OTP? ",
-                      style: const TextStyle(color: Colors.black54),
-                      children: [
-                        TextSpan(
-                          text: "Kirim ulang",
-                          style: TextStyle(
-                            color:
-                                _secondsRemaining > 0
-                                    ? Colors.grey
-                                    : AppColor.purpleMain,
-                            fontWeight: FontWeight.bold,
+                  onPressed:
+                      (_secondsRemaining <= 0 && !isResending)
+                          ? resendOtp
+                          : null,
+                  child:
+                      isResending
+                          ? const CircularProgressIndicator(strokeWidth: 2)
+                          : Text.rich(
+                            TextSpan(
+                              text: "Belum menerima OTP? ",
+                              style: const TextStyle(color: Colors.black54),
+                              children: [
+                                TextSpan(
+                                  text: "Kirim ulang",
+                                  style: TextStyle(
+                                    color:
+                                        (_secondsRemaining <= 0)
+                                            ? AppColor.purpleMain
+                                            : Colors.grey,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
                 ),
               ],
             ),

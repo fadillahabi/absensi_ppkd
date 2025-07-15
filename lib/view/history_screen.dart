@@ -277,7 +277,7 @@ class _HistoryScreenState extends State<HistoryScreen>
   Widget _buildMonthSelector() {
     return Container(
       height: 80,
-      margin: const EdgeInsets.symmetric(vertical: 20),
+      margin: const EdgeInsets.symmetric(vertical: 16),
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -355,10 +355,10 @@ class _HistoryScreenState extends State<HistoryScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildCheckInfo("Check In", checkIn, Icons.login, Colors.green),
+                _buildCheckInfo("Clock In", checkIn, Icons.login, Colors.green),
                 const SizedBox(height: 12),
                 _buildCheckInfo(
-                  "Check Out",
+                  "Clock Out",
                   checkOut,
                   Icons.logout,
                   Colors.red,

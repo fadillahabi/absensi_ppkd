@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 import 'package:ppkd_flutter/constant/app_color.dart';
 import 'package:ppkd_flutter/helper/shared_preference.dart';
@@ -38,6 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     fetchUserProfile();
+    initializeDateFormatting('id_ID');
     _startClock();
     getCurrentLocation();
     fetchAbsenStatistics(); // New: Fetch attendance statistics
@@ -284,7 +286,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildAttendanceCard() {
     final formattedTime = DateFormat('HH : mm : ss').format(_now);
-    final formattedDay = DateFormat('EEEE, dd MMMM yyyy').format(_now);
+    final formattedDay = DateFormat('EEEE, dd MMMM yyyy', 'id_ID').format(_now);
 
     return Material(
       elevation: 6,
