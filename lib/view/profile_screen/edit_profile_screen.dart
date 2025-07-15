@@ -127,13 +127,37 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 children: [
                   CircleAvatar(
                     radius: 60,
-                    backgroundImage:
+                    backgroundColor: Colors.grey.shade200,
+                    child:
                         _imageFile != null
-                            ? FileImage(_imageFile!)
+                            ? ClipOval(
+                              child: Image.file(
+                                _imageFile!,
+                                fit: BoxFit.cover,
+                                width: 120,
+                                height: 120,
+                              ),
+                            )
                             : (_currentPhotoUrl.isNotEmpty
-                                ? NetworkImage(_currentPhotoUrl)
-                                : const AssetImage('assets/images/student.png')
-                                    as ImageProvider),
+                                ? ClipOval(
+                                  child: Image.network(
+                                    _currentPhotoUrl,
+                                    fit: BoxFit.cover,
+                                    width: 120,
+                                    height: 120,
+                                    errorBuilder:
+                                        (_, __, ___) => const Icon(
+                                          Icons.broken_image,
+                                          size: 48,
+                                          color: Colors.grey,
+                                        ),
+                                  ),
+                                )
+                                : const Icon(
+                                  Icons.broken_image,
+                                  size: 48,
+                                  color: Colors.grey,
+                                )),
                   ),
                   Container(
                     padding: const EdgeInsets.all(6),

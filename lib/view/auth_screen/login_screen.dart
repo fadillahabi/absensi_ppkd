@@ -393,8 +393,22 @@ class _LoginScreenState extends State<LoginScreen> {
                             width: double.infinity,
                             child: OutlinedButton.icon(
                               onPressed: () {
-                                // TODO: Implement Google Sign-In logic
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: const Text(
+                                      'Fitur Google Sign-In masih dalam pengembangan',
+                                    ),
+                                    backgroundColor: Colors.orange[600],
+                                    behavior: SnackBarBehavior.floating,
+                                    margin: const EdgeInsets.all(16),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    duration: const Duration(seconds: 2),
+                                  ),
+                                );
                               },
+
                               icon: Image.asset(
                                 'assets/images/logogugu.png', // Pastikan logo ini memiliki latar belakang transparan atau putih
                                 height: 20, // Ukuran ikon lebih besar
@@ -451,7 +465,20 @@ class _LoginScreenState extends State<LoginScreen> {
                             width: double.infinity,
                             child: OutlinedButton.icon(
                               onPressed: () {
-                                // TODO: Implement Facebook Sign-In logic
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: const Text(
+                                      'Fitur Facebook Sign-In masih dalam pengembangan',
+                                    ),
+                                    backgroundColor: Colors.orange[600],
+                                    behavior: SnackBarBehavior.floating,
+                                    margin: const EdgeInsets.all(16),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    duration: const Duration(seconds: 2),
+                                  ),
+                                );
                               },
                               icon: const Icon(
                                 Icons.facebook,

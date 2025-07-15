@@ -16,7 +16,7 @@ class CheckOutScreen extends StatefulWidget {
 
 class _CheckOutScreenState extends State<CheckOutScreen> {
   GoogleMapController? mapController;
-  final LatLng _ppkdCenter = LatLng(-6.2109, 106.8129);
+  final LatLng _ppkdCenter = LatLng(-6.2932351, 106.8906202);
   String currentAddress = "Memuat alamat...";
   double? currentDistance;
   bool isInRange = false;

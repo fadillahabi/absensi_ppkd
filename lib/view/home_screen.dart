@@ -95,8 +95,34 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> getCurrentLocation() async {
     try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        setState(() {
+          currentAddress = "Layanan lokasi tidak aktif";
+        });
+        return;
+      }
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          setState(() {
+            currentAddress = "Izin lokasi ditolak";
+          });
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        setState(() {
+          currentAddress = "Izin lokasi ditolak permanen";
+        });
+        return;
+      }
+
       final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.best,
+        desiredAccuracy: LocationAccuracy.high,
       );
 
       final placemarks = await placemarkFromCoordinates(
@@ -109,6 +135,10 @@ class _HomeScreenState extends State<HomeScreen> {
         setState(() {
           currentAddress =
               "${p.street}, ${p.subLocality}, ${p.locality}, ${p.administrativeArea}";
+        });
+      } else {
+        setState(() {
+          currentAddress = "Lokasi tidak ditemukan";
         });
       }
     } catch (e) {

@@ -16,7 +16,7 @@ class CheckinScreen extends StatefulWidget {
 
 class _CheckinScreenState extends State<CheckinScreen> {
   GoogleMapController? mapController;
-  final LatLng _ppkdCenter = LatLng(-6.2109, 106.8129);
+  final LatLng _ppkdCenter = LatLng(-6.2932351, 106.8906202);
   String currentAddress = "Memuat alamat...";
   double? currentDistance;
   bool isInRange = false;

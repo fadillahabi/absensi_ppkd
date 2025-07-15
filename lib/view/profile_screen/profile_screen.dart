@@ -23,7 +23,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<UserLogin> fetchUserProfile() async {
-    print("Memuat ulang profil...");
     final token = await PreferencesOTI.getToken();
     if (token == null) {
       throw Exception('Token tidak ditemukan. Pengguna belum login.');
@@ -54,7 +53,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
           return Column(
             children: [
-              // Header Profile
               Container(
                 width: double.infinity,
                 margin: const EdgeInsets.symmetric(horizontal: 42),
@@ -125,10 +123,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ],
                 ),
               ),
-
               const SizedBox(height: 24),
-
-              // Menu Items
               _buildMenuItem(
                 icon: Icons.person_outline,
                 text: "Ubah Profil",
@@ -139,9 +134,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       builder: (context) => const EditProfileScreen(),
                     ),
                   );
-
                   if (result != null && result is UserLogin) {
-                    print("Profil diperbarui, pakai data terbaru...");
                     setState(() {
                       _userFuture = Future.value(result);
                     });
@@ -168,9 +161,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 text: "Keluar",
                 iconColor: Colors.red,
                 textColor: Colors.red,
-                onTap: () {
-                  _showLogoutDialog();
-                },
+                onTap: _showLogoutDialog,
               ),
             ],
           );
@@ -202,161 +193,165 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _showLogoutDialog() {
     showDialog(
       context: context,
-      barrierDismissible: false, // Prevent dismissing by tapping outside
-      builder:
-          (context) => AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            elevation: 10,
-            backgroundColor: Colors.white,
-            titlePadding: const EdgeInsets.only(top: 24, left: 24, right: 24),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 24,
-              vertical: 16,
-            ),
-            actionsPadding: const EdgeInsets.only(
-              left: 24,
-              right: 24,
-              bottom: 24,
-            ),
-
-            title: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.red.shade50,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    Icons.logout_rounded,
-                    color: Colors.red.shade600,
-                    size: 24,
-                  ),
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          backgroundColor: Colors.white,
+          titlePadding: const EdgeInsets.only(top: 24, left: 24, right: 24),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 24,
+            vertical: 16,
+          ),
+          actionsPadding: const EdgeInsets.only(
+            left: 24,
+            right: 24,
+            bottom: 24,
+          ),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                const SizedBox(width: 12),
-                const Text(
+                child: Icon(
+                  Icons.logout_rounded,
+                  color: Colors.red.shade600,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
                   "Konfirmasi Keluar",
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w600,
                     color: Colors.black87,
                   ),
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ],
-            ),
-
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 8),
-                const Text(
-                  "Apakah Anda yakin ingin keluar dari aplikasi?",
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.black54,
-                    height: 1.4,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.orange.shade50,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.orange.shade200),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.info_outline_rounded,
-                        color: Colors.orange.shade700,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      const Expanded(
-                        child: Text(
-                          "Sesi Anda akan berakhir dan perlu login kembali",
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.orange,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-
-            actions: [
-              Row(
+              ),
+            ],
+          ),
+          content: ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 200),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: TextButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          side: BorderSide(color: Colors.grey.shade300),
-                        ),
-                      ),
-                      child: const Text(
-                        "Batal",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black54,
-                        ),
-                      ),
+                  const Text(
+                    "Apakah Anda yakin ingin keluar dari aplikasi?",
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.black54,
+                      height: 1.4,
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        Navigator.of(context).pop(); // Close dialog
-                        await PreferencesOTI.clearSession(); // Hapus session
-                        if (context.mounted) {
-                          Navigator.pushReplacementNamed(
-                            context,
-                            "/login_screen",
-                          );
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red.shade600,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.orange.shade200),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.info_outline_rounded,
+                          color: Colors.orange.shade700,
+                          size: 20,
                         ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.logout_rounded, size: 18),
-                          const SizedBox(width: 8),
-                          const Text(
-                            "Keluar",
+                        const SizedBox(width: 8),
+                        const Expanded(
+                          child: Text(
+                            "Sesi Anda akan berakhir dan perlu login kembali",
                             style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                              color: Colors.orange,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
-            ],
+            ),
           ),
+          actions: [
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: BorderSide(color: Colors.grey.shade300),
+                      ),
+                    ),
+                    child: const Text(
+                      "Batal",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black54,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      Navigator.of(context).pop();
+                      await PreferencesOTI.clearSession();
+                      if (context.mounted) {
+                        Navigator.pushReplacementNamed(
+                          context,
+                          "/login_screen",
+                        );
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red.shade600,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.logout_rounded, size: 18),
+                        SizedBox(width: 8),
+                        Text(
+                          "Keluar",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
     );
   }
 }
