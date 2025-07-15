@@ -32,6 +32,8 @@ class _HomeScreenState extends State<HomeScreen> {
   DateTime? checkInTime;
   DateTime? checkOutTime;
   String currentAddress = "Memuat lokasi...";
+  bool isLoadingStats = false;
+
   // Removed attendanceHistory and izinList
   StatDataAbsen? absenStats; // New: to hold attendance statistics
 
@@ -122,6 +124,10 @@ class _HomeScreenState extends State<HomeScreen> {
     final token = await PreferencesOTI.getToken();
     if (token == null) return;
 
+    setState(() {
+      isLoadingStats = true;
+    });
+
     try {
       final response = await AbsenServices.fetchStatAbsen(token);
       setState(() {
@@ -129,6 +135,10 @@ class _HomeScreenState extends State<HomeScreen> {
       });
     } catch (e) {
       print("Gagal mengambil statistik absen: $e");
+    } finally {
+      setState(() {
+        isLoadingStats = false;
+      });
     }
   }
 
@@ -141,10 +151,22 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
 
-    Navigator.push(
+    final result = await Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => PermissionScreen(token: token)),
     );
+
+    if (result == true) {
+      await fetchAbsenStatistics(); // Refresh statistik absen setelah izin
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Statistik absen diperbarui setelah pengajuan izin"),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -192,20 +214,26 @@ class _HomeScreenState extends State<HomeScreen> {
               CircleAvatar(
                 radius: 32,
                 backgroundColor: Colors.white,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(50),
-                  child:
-                      (user?.profilePhotoUrl != null &&
-                              user!.profilePhotoUrl!.isNotEmpty)
-                          ? Image.network(
-                            user!.profilePhotoUrl!,
-                            fit: BoxFit.cover,
-                          )
-                          : const Icon(
-                            Icons.person,
-                            size: 32,
-                            color: Colors.grey,
-                          ),
+                child: ClipOval(
+                  child: SizedBox(
+                    width: 60,
+                    height: 60,
+                    child:
+                        (user?.profilePhotoUrl != null &&
+                                user!.profilePhotoUrl!.isNotEmpty)
+                            ? Image.network(
+                              user!.profilePhotoUrl!,
+                              fit: BoxFit.cover,
+                              errorBuilder:
+                                  (_, __, ___) =>
+                                      const Icon(Icons.broken_image),
+                            )
+                            : const Icon(
+                              Icons.person,
+                              size: 32,
+                              color: Colors.grey,
+                            ),
+                  ),
                 ),
               ),
               const SizedBox(width: 16),
@@ -501,8 +529,10 @@ class _HomeScreenState extends State<HomeScreen> {
         borderRadius: BorderRadius.circular(16),
       ),
       child:
-          absenStats == null
+          isLoadingStats
               ? const Center(child: CircularProgressIndicator())
+              : absenStats == null
+              ? const Text("Gagal memuat statistik absen.")
               : Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

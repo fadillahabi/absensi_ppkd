@@ -71,10 +71,12 @@ class _PermissionScreenState extends State<PermissionScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        // Optionally clear fields or navigate back
-        _dateController.clear();
-        _reasonController.clear();
-        _selectedDate = null;
+
+        // Kirim kembali ke HomeScreen dengan data berhasil
+        Navigator.pop(
+          context,
+          true,
+        ); // ✅ ini kunci agar HomeScreen tahu perlu refresh
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
