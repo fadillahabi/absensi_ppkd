@@ -152,16 +152,18 @@ class UserApi {
   ) async {
     final uri = Uri.parse("${Endpoint.baseUrlApi}/profile/photo");
 
-    final request =
-        http.MultipartRequest('PUT', uri) // GANTI dari POST ke PUT
-          ..headers['Authorization'] = 'Bearer $token'
-          ..headers['Accept'] = 'application/json'
-          ..files.add(
-            await http.MultipartFile.fromPath('profile_photo', photoFile.path),
-          );
+    final bytes = await photoFile.readAsBytes();
+    final base64Image = base64Encode(bytes);
 
-    final streamedResponse = await request.send();
-    final response = await http.Response.fromStream(streamedResponse);
+    final response = await http.put(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({'profile_photo': base64Image}),
+    );
 
     print("UPLOAD FOTO RESPONSE: ${response.body}");
 
@@ -170,7 +172,7 @@ class UserApi {
       return jsonData['data']['profile_photo'];
     } else {
       print("Gagal upload foto profil: ${response.body}");
-      return null;
+      throw Exception('Upload foto gagal: ${response.statusCode}');
     }
   }
 }

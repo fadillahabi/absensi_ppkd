@@ -7,6 +7,7 @@ import 'package:ppkd_flutter/view/auth_screen/change_password_screen.dart';
 import 'package:ppkd_flutter/view/auth_screen/forgot_password_screen.dart';
 import 'package:ppkd_flutter/view/auth_screen/login_screen.dart';
 import 'package:ppkd_flutter/view/auth_screen/register_screen.dart';
+import 'package:ppkd_flutter/view/permission_screen.dart';
 import 'package:ppkd_flutter/view/profile_screen/edit_profile_screen.dart';
 import 'package:ppkd_flutter/view/splash_screen.dart';
 import 'package:ppkd_flutter/widgets/buttom_navbar.dart';
@@ -36,6 +37,7 @@ class MyApp extends StatelessWidget {
         EditProfileScreen.id: (context) => const EditProfileScreen(),
         CheckinScreen.id: (context) => const CheckinScreen(),
         CheckOutScreen.id: (context) => const CheckOutScreen(),
+        PermissionScreen.id: (context) => const PermissionScreen(token: ""),
         ChangePasswordScreen.id:
             (context) => ChangePasswordScreen(email: 'user@email.com'),
         ForgotPasswordScreen.id: (context) => ForgotPasswordScreen(),

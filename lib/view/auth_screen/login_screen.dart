@@ -22,7 +22,14 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final bool _isVisiblePassword = true;
+
+  void _showLoadingDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+  }
 
   @override
   void dispose() {
@@ -73,6 +80,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         const SizedBox(height: 32),
 
+                        // Email Input
                         CustomInputField(
                           hintText: 'Email',
                           icon: Icons.email_outlined,
@@ -89,6 +97,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         const SizedBox(height: 16),
 
+                        // Password Input
                         CustomPasswordField(
                           controller: _passwordController,
                           validator: (value) {
@@ -102,6 +111,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           },
                         ),
 
+                        // Forgot Password
                         Align(
                           alignment: Alignment.centerRight,
                           child: TextButton(
@@ -119,10 +129,14 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
 
                         const SizedBox(height: 8),
+
+                        // Button Login with Loading
                         MainButton(
                           text: 'Masuk',
                           onPressed: () async {
                             if (_formKey.currentState!.validate()) {
+                              _showLoadingDialog(); // Tampilkan loading
+
                               try {
                                 final user = await UserApi.loginUser(
                                   email: _emailController.text.trim(),
@@ -132,8 +146,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                 await PreferencesOTI.saveLoginSession();
 
                                 if (!mounted) return;
+                                Navigator.pop(context); // Tutup loading
 
-                                // ✅ Snackbar berhasil login
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                     content: Row(
@@ -167,12 +181,17 @@ class _LoginScreenState extends State<LoginScreen> {
                                   const Duration(milliseconds: 800),
                                 );
 
+                                if (!mounted) return;
                                 Navigator.pushReplacementNamed(
                                   context,
                                   CustomButtonNavBar.id,
                                   arguments: 0,
                                 );
                               } catch (e) {
+                                if (!mounted) return;
+                                Navigator.pop(
+                                  context,
+                                ); // Tutup loading saat error
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                     content: Text(
@@ -187,25 +206,25 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
 
                         const SizedBox(height: 20),
+
+                        // Divider
                         Row(
-                          children: [
-                            const Expanded(
-                              child: Divider(color: Colors.white24),
-                            ),
-                            const Padding(
+                          children: const [
+                            Expanded(child: Divider(color: Colors.white24)),
+                            Padding(
                               padding: EdgeInsets.symmetric(horizontal: 8),
                               child: Text(
                                 'atau',
                                 style: TextStyle(color: Colors.white60),
                               ),
                             ),
-                            const Expanded(
-                              child: Divider(color: Colors.white24),
-                            ),
+                            Expanded(child: Divider(color: Colors.white24)),
                           ],
                         ),
+
                         const SizedBox(height: 16),
 
+                        // Google Button
                         OutlinedButton.icon(
                           onPressed: () {},
                           icon: Image.asset(
@@ -241,6 +260,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                         const SizedBox(height: 10),
 
+                        // Facebook Button
                         OutlinedButton.icon(
                           onPressed: () {},
                           icon: const Icon(
@@ -275,6 +295,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
 
                         const SizedBox(height: 24),
+
+                        // Register Link
                         RichText(
                           text: TextSpan(
                             text: 'Belum punya akun? ',
@@ -301,6 +323,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ],
                           ),
                         ),
+
                         const SizedBox(height: 16),
                       ],
                     ),

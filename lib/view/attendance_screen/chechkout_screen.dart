@@ -190,42 +190,6 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
             ),
 
             const SizedBox(height: 10),
-
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32),
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  // TODO: Tambahkan logika ambil foto jika diperlukan
-                },
-                icon: const Icon(
-                  Icons.camera_alt_rounded,
-                  color: Color(0xFF5A32DC),
-                  size: 22,
-                ),
-                label: const Text(
-                  "Ambil Foto",
-                  style: TextStyle(
-                    color: Color(0xFF5A32DC),
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  elevation: 4,
-                  shadowColor: Colors.deepPurpleAccent.withOpacity(0.2),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  side: const BorderSide(color: Color(0xFF5A32DC), width: 1.5),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(25),
-                  ),
-                  minimumSize: const Size(double.infinity, 0),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 12),
-
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 32),
               child: ElevatedButton(
@@ -233,7 +197,6 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                     isInRange && !_isLoading
                         ? () async {
                           if (_currentLatLng == null) return;
-
                           setState(() => _isLoading = true);
 
                           final lat = _currentLatLng!.latitude;
@@ -262,8 +225,17 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
 
                           setState(() => _isLoading = false);
 
+                          if (!mounted) return;
+
                           if (response != null &&
                               response.data.checkOutTime != null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Check out berhasil!"),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+
                             Navigator.pop(context, {
                               'checkOutTime': response.data.checkOutTime,
                               'status': response.data.status,
@@ -273,13 +245,13 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text("Gagal melakukan check out"),
+                                content: Text("Gagal melakukan check out!"),
+                                backgroundColor: Colors.red,
                               ),
                             );
                           }
                         }
                         : null,
-
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF5A32DC),
                   foregroundColor: Colors.white,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ppkd_flutter/constant/app_color.dart';
 
 class MainButton extends StatelessWidget {
   final String text;
@@ -11,7 +12,7 @@ class MainButton extends StatelessWidget {
     required this.text,
     required this.onPressed,
     this.isLoading = false,
-    this.backgroundColor = const Color(0xFF6A1B9A),
+    this.backgroundColor = AppColor.purpleMain,
   });
 
   @override

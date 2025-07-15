@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:ppkd_flutter/constant/app_color.dart';
 import 'package:ppkd_flutter/helper/shared_preference.dart';
 import 'package:ppkd_flutter/services/auth_services.dart';
 
@@ -60,7 +61,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // Update text data
       final success = await UserApi.updateProfile(
         token: token,
         name: _nameController.text,
@@ -70,12 +70,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
       if (!mounted) return;
 
-      // Upload photo if selected
       if (_imageFile != null) {
         await UserApi.updateProfilePhoto(token, _imageFile!);
       }
 
-      // Ambil ulang profil terbaru
       final updatedUser = await UserApi.getProfile(token);
 
       setState(() => _isLoading = false);
@@ -83,11 +81,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Profil berhasil diperbarui"),
-          backgroundColor: Colors.green,
+          backgroundColor: AppColor.purpleMain,
         ),
       );
 
-      // Kirim user baru ke ProfileScreen
       Navigator.pop(context, updatedUser);
     } catch (e) {
       setState(() => _isLoading = false);
@@ -172,6 +169,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     decoration: const InputDecoration(
                       labelText: 'Email',
                       border: OutlineInputBorder(),
+                      disabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.grey),
+                      ),
+                      filled: true,
+                      fillColor: Color(0xFFF5F5F5),
                     ),
                     enabled: false,
                   ),
@@ -181,12 +183,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     decoration: const InputDecoration(
                       labelText: 'Jenis Kelamin',
                       border: OutlineInputBorder(),
+                      disabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.grey),
+                      ),
+                      filled: true,
+                      fillColor: Color(0xFFF5F5F5),
                     ),
                     items: const [
                       DropdownMenuItem(value: 'L', child: Text('Laki-laki')),
                       DropdownMenuItem(value: 'P', child: Text('Perempuan')),
                     ],
-                    onChanged: null, // Tidak bisa diubah
+                    onChanged: null,
                   ),
                   const SizedBox(height: 24),
                   ElevatedButton(
@@ -199,7 +206,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               }
                             },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.deepPurple,
+                      backgroundColor: AppColor.purpleMain,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       minimumSize: const Size.fromHeight(50),
                     ),

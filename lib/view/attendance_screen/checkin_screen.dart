@@ -57,9 +57,6 @@ class _CheckinScreenState extends State<CheckinScreen> {
         _ppkdCenter.longitude,
       );
 
-      print("Lokasi saat ini: $latLng");
-      print("Jarak ke PPKD: $distance meter");
-
       setState(() {
         _currentLatLng = latLng;
         currentDistance = distance;
@@ -155,9 +152,7 @@ class _CheckinScreenState extends State<CheckinScreen> {
                 ),
               ],
             ),
-
             const SizedBox(height: 12),
-
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               padding: const EdgeInsets.all(14),
@@ -191,44 +186,7 @@ class _CheckinScreenState extends State<CheckinScreen> {
                 ],
               ),
             ),
-
-            const SizedBox(height: 10),
-
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32),
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  // TODO: Tambahkan logika ambil foto
-                },
-                icon: const Icon(
-                  Icons.camera_alt_rounded,
-                  color: Color(0xFF5A32DC),
-                  size: 22,
-                ),
-                label: const Text(
-                  "Ambil Foto",
-                  style: TextStyle(
-                    color: Color(0xFF5A32DC),
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  elevation: 4,
-                  shadowColor: Colors.deepPurpleAccent.withOpacity(0.2),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  side: const BorderSide(color: Color(0xFF5A32DC), width: 1.5),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(25),
-                  ),
-                  minimumSize: const Size(double.infinity, 0),
-                ),
-              ),
-            ),
-
             const SizedBox(height: 12),
-
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 32),
               child: ElevatedButton(
@@ -238,7 +196,7 @@ class _CheckinScreenState extends State<CheckinScreen> {
                           if (_currentLatLng == null) return;
 
                           setState(() {
-                            _isLoading = true; // ✅ mulai loading
+                            _isLoading = true;
                           });
 
                           final lat = _currentLatLng!.latitude;
@@ -266,12 +224,20 @@ class _CheckinScreenState extends State<CheckinScreen> {
                           );
 
                           setState(() {
-                            _isLoading = false; // ✅ selesai loading
+                            _isLoading = false;
                           });
 
                           if (response != null) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(response.message)),
+                              SnackBar(
+                                content: Text(response.message),
+                                backgroundColor: Colors.green,
+                                behavior: SnackBarBehavior.floating,
+                                margin: const EdgeInsets.all(16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
                             );
 
                             Navigator.pop(context, {
@@ -284,6 +250,14 @@ class _CheckinScreenState extends State<CheckinScreen> {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text("Gagal melakukan check in"),
+                                backgroundColor: Colors.red,
+                                behavior: SnackBarBehavior.floating,
+                                margin: EdgeInsets.all(16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.all(
+                                    Radius.circular(12),
+                                  ),
+                                ),
                               ),
                             );
                           }
@@ -318,7 +292,6 @@ class _CheckinScreenState extends State<CheckinScreen> {
                         : const Text("Clock In"),
               ),
             ),
-
             const SizedBox(height: 20),
           ],
         ),

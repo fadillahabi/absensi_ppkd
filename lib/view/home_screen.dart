@@ -1,3 +1,4 @@
+// import dan deklarasi tetap
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -6,12 +7,13 @@ import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
 import 'package:ppkd_flutter/constant/app_color.dart';
 import 'package:ppkd_flutter/helper/shared_preference.dart';
-import 'package:ppkd_flutter/models/absen_history_model.dart';
 import 'package:ppkd_flutter/models/login_model.dart';
+import 'package:ppkd_flutter/models/stat_absen_model.dart';
 import 'package:ppkd_flutter/services/absen_services.dart';
 import 'package:ppkd_flutter/services/auth_services.dart';
 import 'package:ppkd_flutter/view/attendance_screen/chechkout_screen.dart';
 import 'package:ppkd_flutter/view/attendance_screen/checkin_screen.dart';
+import 'package:ppkd_flutter/view/permission_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -29,7 +31,8 @@ class _HomeScreenState extends State<HomeScreen> {
   DateTime? checkInTime;
   DateTime? checkOutTime;
   String currentAddress = "Memuat lokasi...";
-  List<HistoryAbsenData> attendanceHistory = [];
+  // Removed attendanceHistory and izinList
+  StatDataAbsen? absenStats; // New: to hold attendance statistics
 
   @override
   void initState() {
@@ -37,7 +40,7 @@ class _HomeScreenState extends State<HomeScreen> {
     fetchUserProfile();
     _startClock();
     getCurrentLocation();
-    fetchAttendanceHistory();
+    fetchAbsenStatistics(); // New: Fetch attendance statistics
   }
 
   void _startClock() {
@@ -54,15 +57,20 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
+  // Removed fetchIzinList and fetchAttendanceHistory
+
   Future<void> _handleRefresh() async {
     await fetchUserProfile();
     await getCurrentLocation();
-    await fetchAttendanceHistory();
+    await fetchAbsenStatistics(); // Refresh attendance statistics
 
     if (mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Data berhasil diperbarui")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Data berhasil diperbarui"),
+          backgroundColor: AppColor.purpleMain,
+        ),
+      );
     }
   }
 
@@ -107,17 +115,18 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> fetchAttendanceHistory() async {
+  // New: fetchAbsenStatistics
+  Future<void> fetchAbsenStatistics() async {
     final token = await PreferencesOTI.getToken();
     if (token == null) return;
 
     try {
-      final history = await AbsenServices.fetchAbsenHistory(token);
+      final response = await AbsenServices.fetchStatAbsen(token);
       setState(() {
-        attendanceHistory = history;
+        absenStats = response.data;
       });
     } catch (e) {
-      print("Gagal mengambil data riwayat absen: $e");
+      print("Gagal mengambil statistik absen: $e");
     }
   }
 
@@ -130,66 +139,9 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
 
-    final TextEditingController alasanController = TextEditingController();
-
-    await showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text("Ajukan Izin"),
-          content: TextField(
-            controller: alasanController,
-            maxLines: 3,
-            decoration: const InputDecoration(
-              hintText: "Masukkan alasan izin...",
-              border: OutlineInputBorder(),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Batal"),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                final alasan = alasanController.text.trim();
-                if (alasan.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Alasan tidak boleh kosong.")),
-                  );
-                  return;
-                }
-
-                try {
-                  final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
-
-                  final response = await AbsenServices.submitIzin(
-                    token: token,
-                    date: today,
-                    alasanIzin: alasan,
-                  );
-
-                  if (context.mounted) {
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(SnackBar(content: Text(response.message)));
-                  }
-
-                  await fetchAttendanceHistory();
-                } catch (e) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text("Gagal mengajukan izin: $e")),
-                    );
-                  }
-                }
-              },
-              child: const Text("Kirim"),
-            ),
-          ],
-        );
-      },
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => PermissionScreen(token: token)),
     );
   }
 
@@ -198,135 +150,12 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       body: Column(
         children: [
-          Stack(
-            children: [
-              Container(
-                width: double.infinity,
-                height: 200,
-                decoration: const BoxDecoration(
-                  image: DecorationImage(
-                    image: AssetImage('assets/images/background1.jpg'),
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(top: 20, left: 20, right: 20),
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 32,
-                      backgroundColor: Colors.white,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(50),
-                        child:
-                            (user?.profilePhotoUrl != null &&
-                                    user!.profilePhotoUrl!.isNotEmpty)
-                                ? Image.network(
-                                  user!.profilePhotoUrl!,
-                                  fit: BoxFit.cover,
-                                )
-                                : const Icon(
-                                  Icons.person,
-                                  size: 32,
-                                  color: Colors.grey,
-                                ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            "Semangat Pagi",
-                            style: TextStyle(color: Colors.white),
-                          ),
-                          Text(
-                            user?.name ?? 'Memuat nama...',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            selectedTraining.isNotEmpty
-                                ? selectedTraining
-                                : "Memuat...",
-                            style: const TextStyle(color: Colors.white),
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 1,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+          _buildHeader(),
           Expanded(
             child: Stack(
               clipBehavior: Clip.none,
               children: [
-                Container(
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(32),
-                    ),
-                  ),
-                  child: RefreshIndicator(
-                    onRefresh: _handleRefresh,
-                    color: AppColor.purpleMain,
-                    backgroundColor: Colors.white,
-                    displacement: 30,
-                    edgeOffset: 10,
-                    child: SingleChildScrollView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      child: Column(
-                        children: [
-                          const SizedBox(height: 60),
-                          _buildLocationAndTime(),
-                          const SizedBox(height: 20),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
-                            child: Align(
-                              alignment: Alignment.centerLeft,
-                              child: Text(
-                                "Riwayat Kehadiran",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                  color: AppColor.purpleMain,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          ...attendanceHistory.map((item) {
-                            String date = item.attendanceDate.day
-                                .toString()
-                                .padLeft(2, '0');
-                            String month = DateFormat(
-                              'MMMM',
-                            ).format(item.attendanceDate);
-                            String checkIn = item.checkInTime ?? "-- : -- : --";
-                            String checkOut =
-                                item.checkOutTime ?? "-- : -- : --";
-                            return _buildHistoryCard(
-                              date,
-                              month,
-                              checkIn,
-                              checkOut,
-                            );
-                          }),
-                          const SizedBox(height: 80),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+                _buildBody(),
                 Positioned(
                   top: -40,
                   left: 16,
@@ -337,6 +166,118 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Stack(
+      children: [
+        Container(
+          width: double.infinity,
+          height: 200,
+          decoration: const BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage('assets/images/background1.jpg'),
+              fit: BoxFit.cover,
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(top: 20, left: 20, right: 20),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 32,
+                backgroundColor: Colors.white,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(50),
+                  child:
+                      (user?.profilePhotoUrl != null &&
+                              user!.profilePhotoUrl!.isNotEmpty)
+                          ? Image.network(
+                            user!.profilePhotoUrl!,
+                            fit: BoxFit.cover,
+                          )
+                          : const Icon(
+                            Icons.person,
+                            size: 32,
+                            color: Colors.grey,
+                          ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Semangat Pagi",
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    Text(
+                      user?.name ?? 'Memuat nama...',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      selectedTraining.isNotEmpty
+                          ? selectedTraining
+                          : "Memuat...",
+                      style: const TextStyle(color: Colors.white),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBody() {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      ),
+      child: RefreshIndicator(
+        onRefresh: _handleRefresh,
+        color: AppColor.purpleMain,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            children: [
+              const SizedBox(height: 60),
+              _buildLocationAndTime(),
+              const SizedBox(height: 20),
+
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    "Statistik Absen",
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      color: AppColor.purpleMain,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              _buildAbsenStatsCard(),
+
+              const SizedBox(height: 80),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -384,12 +325,12 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildLocationAndTime() {
     final formattedCheckIn =
         checkInTime != null
-            ? DateFormat('HH : mm : ss').format(checkInTime!)
-            : "-- : -- : --";
+            ? DateFormat('HH : mm').format(checkInTime!)
+            : "-- : --";
     final formattedCheckOut =
         checkOutTime != null
-            ? DateFormat('HH : mm : ss').format(checkOutTime!)
-            : "-- : -- : --";
+            ? DateFormat('HH : mm').format(checkOutTime!)
+            : "-- : --";
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
@@ -398,7 +339,7 @@ class _HomeScreenState extends State<HomeScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: const [
-          BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 2)),
+          BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 2)),
         ],
       ),
       child: Column(
@@ -432,7 +373,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                     CheckinScreen.id,
                                   )
                                   as Map<String, dynamic>?;
-
                           if (result != null && result['checkInTime'] != null) {
                             setState(() {
                               checkInTime = DateFormat(
@@ -440,6 +380,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               ).parse(result['checkInTime']);
                             });
                             getCurrentLocation();
+                            fetchAbsenStatistics(); // Refresh stats after check-in
                           }
                         }
                         : null,
@@ -456,18 +397,15 @@ class _HomeScreenState extends State<HomeScreen> {
                                     CheckOutScreen.id,
                                   )
                                   as Map<String, dynamic>?;
-
                           if (result != null &&
                               result['checkOutTime'] != null) {
-                            try {
+                            setState(() {
                               checkOutTime = DateFormat(
-                                'HH:mm:ss',
+                                'HH:mm',
                               ).parse(result['checkOutTime']);
-                            } catch (e) {
-                              print("Gagal parsing checkOutTime: $e");
-                            }
+                            });
                             getCurrentLocation();
-                            setState(() {});
+                            fetchAbsenStatistics(); // Refresh stats after check-out
                           }
                         }
                         : null,
@@ -551,70 +489,62 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildHistoryCard(
-    String date,
-    String day,
-    String checkIn,
-    String checkOut,
-  ) {
+  // New: Widget to display attendance statistics
+  Widget _buildAbsenStatsCard() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: const Color(0xFFEDEBFA),
         borderRadius: BorderRadius.circular(16),
       ),
-      child: Row(
-        children: [
-          Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  date,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+      child:
+          absenStats == null
+              ? const Center(child: CircularProgressIndicator())
+              : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildStatRow(
+                    "Total Absen:",
+                    absenStats!.totalAbsen.toString(),
                   ),
-                ),
-                Text(day, style: const TextStyle(fontSize: 12)),
-              ],
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                Column(
-                  children: [
-                    const Text("Check In", style: TextStyle(fontSize: 12)),
-                    Text(
-                      checkIn,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ),
-                Column(
-                  children: [
-                    const Text("Check Out", style: TextStyle(fontSize: 12)),
-                    Text(
-                      checkOut,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+                  const SizedBox(height: 8),
+                  _buildStatRow(
+                    "Total Masuk:",
+                    absenStats!.totalMasuk.toString(),
+                  ),
+                  const SizedBox(height: 8),
+                  _buildStatRow(
+                    "Total Izin:",
+                    absenStats!.totalIzin.toString(),
+                  ),
+                  const SizedBox(height: 8),
+                  _buildStatRow(
+                    "Sudah Absen Hari Ini:",
+                    absenStats!.sudahAbsenHariIni ? "Sudah" : "Belum",
+                    color:
+                        absenStats!.sudahAbsenHariIni
+                            ? Colors.green
+                            : Colors.red,
+                  ),
+                ],
+              ),
+    );
+  }
+
+  Widget _buildStatRow(String label, String value, {Color? color}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+        ),
+        Text(
+          value,
+          style: TextStyle(fontSize: 14, color: color ?? AppColor.purpleMain),
+        ),
+      ],
     );
   }
 }

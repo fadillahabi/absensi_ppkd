@@ -194,4 +194,19 @@ class AbsenServices {
       throw Exception('$message (Status: ${response.statusCode})');
     }
   }
+
+  static Future<List<IzinData>> fetchIzin(String token) async {
+    final response = await http.get(
+      Uri.parse(Endpoint.permission),
+      headers: _buildHeaders(token),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final List izinList = data['data'];
+      return izinList.map((e) => IzinData.fromJson(e)).toList();
+    } else {
+      throw Exception('Gagal mengambil data izin');
+    }
+  }
 }
