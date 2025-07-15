@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ppkd_flutter/helper/shared_preference.dart';
-import 'package:ppkd_flutter/models/login_model.dart'; // Model user
+import 'package:ppkd_flutter/models/login_model.dart';
 import 'package:ppkd_flutter/services/auth_services.dart';
 import 'package:ppkd_flutter/view/auth_screen/change_password_screen.dart';
 import 'package:ppkd_flutter/view/profile_screen/edit_profile_screen.dart';
@@ -143,9 +143,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   if (result != null && result is UserLogin) {
                     print("Profil diperbarui, pakai data terbaru...");
                     setState(() {
-                      _userFuture = Future.value(
-                        result,
-                      ); // ← langsung pakai hasil terbaru
+                      _userFuture = Future.value(result);
                     });
                   }
                 },
@@ -160,7 +158,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     MaterialPageRoute(
                       builder:
                           (context) =>
-                              ChangePasswordScreen(email: 'user@gmail.com'),
+                              ChangePasswordScreen(email: user.email ?? ''),
                     ),
                   );
                 },
@@ -171,8 +169,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 iconColor: Colors.red,
                 textColor: Colors.red,
                 onTap: () {
-                  PreferencesOTI.clearSession(); // Hapus token
-                  Navigator.pushReplacementNamed(context, "/login_screen");
+                  _showLogoutDialog();
                 },
               ),
             ],
@@ -199,6 +196,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         const Divider(height: 1),
       ],
+    );
+  }
+
+  void _showLogoutDialog() {
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: const Text("Konfirmasi Keluar"),
+            content: const Text(
+              "Apakah Anda yakin ingin keluar dari aplikasi?",
+            ),
+            actions: [
+              TextButton(
+                child: const Text("Batal"),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                child: const Text("Keluar"),
+                onPressed: () async {
+                  Navigator.of(context).pop(); // Close dialog
+                  await PreferencesOTI.clearSession(); // Hapus session
+                  if (context.mounted) {
+                    Navigator.pushReplacementNamed(context, "/login_screen");
+                  }
+                },
+              ),
+            ],
+          ),
     );
   }
 }
