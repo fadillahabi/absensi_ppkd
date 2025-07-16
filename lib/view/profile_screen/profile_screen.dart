@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:ppkd_flutter/helper/shared_preference.dart';
 import 'package:ppkd_flutter/models/login_model.dart';
 import 'package:ppkd_flutter/services/auth_services.dart';
-import 'package:ppkd_flutter/view/auth_screen/change_password_screen.dart';
 import 'package:ppkd_flutter/view/profile_screen/edit_profile_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -146,12 +145,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 text: "Ubah Kata Sandi",
                 iconColor: Colors.green,
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder:
-                          (context) =>
-                              ChangePasswordScreen(email: user.email ?? ''),
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text(
+                        "Fitur ubah kata sandi masih dalam pengembangan.",
+                      ),
+                      backgroundColor: Colors.orange[700],
+                      behavior: SnackBarBehavior.floating,
+                      margin: const EdgeInsets.all(16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      duration: const Duration(seconds: 2),
                     ),
                   );
                 },
@@ -162,6 +167,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 iconColor: Colors.red,
                 textColor: Colors.red,
                 onTap: _showLogoutDialog,
+              ),
+              Padding(
+                padding: const EdgeInsets.only(top: 32, bottom: 16),
+                child: Text(
+                  '© 2025 Fadillah Abi Prayogo. All Rights Reserved.',
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                  textAlign: TextAlign.center,
+                ),
               ),
             ],
           );
@@ -237,54 +250,49 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ],
           ),
-          content: ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 200),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Apakah Anda yakin ingin keluar dari aplikasi?",
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.black54,
-                      height: 1.4,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.orange.shade50,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.orange.shade200),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(
-                          Icons.info_outline_rounded,
-                          color: Colors.orange.shade700,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        const Expanded(
-                          child: Text(
-                            "Sesi Anda akan berakhir dan perlu login kembali",
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.orange,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Apakah Anda yakin ingin keluar dari aplikasi?",
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.black54,
+                  height: 1.4,
+                ),
               ),
-            ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.orange.shade200),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.info_outline_rounded,
+                      color: Colors.orange.shade700,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    const Expanded(
+                      child: Text(
+                        "Sesi Anda akan berakhir dan perlu login kembali",
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.orange,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
           actions: [
             Row(

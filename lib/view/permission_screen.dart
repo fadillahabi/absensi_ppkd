@@ -215,6 +215,14 @@ class _PermissionScreenState extends State<PermissionScreen> {
                             ),
                           ),
                 ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 32, bottom: 16),
+                  child: Text(
+                    '© 2025 Fadillah Abi Prayogo. All Rights Reserved.',
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
               ],
             ),
           ),

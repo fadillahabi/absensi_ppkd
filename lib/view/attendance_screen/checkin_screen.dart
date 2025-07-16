@@ -16,7 +16,7 @@ class CheckinScreen extends StatefulWidget {
 
 class _CheckinScreenState extends State<CheckinScreen> {
   GoogleMapController? mapController;
-  final LatLng _ppkdCenter = LatLng(-6.2932351, 106.8906202);
+  final LatLng _ppkdCenter = LatLng(-6.210874018959608, 106.81299057980938);
   String currentAddress = "Memuat alamat...";
   double? currentDistance;
   bool isInRange = false;
@@ -293,6 +293,14 @@ class _CheckinScreenState extends State<CheckinScreen> {
               ),
             ),
             const SizedBox(height: 20),
+            Padding(
+              padding: const EdgeInsets.only(top: 32, bottom: 16),
+              child: Text(
+                '© 2025 Fadillah Abi Prayogo. All Rights Reserved.',
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                textAlign: TextAlign.center,
+              ),
+            ),
           ],
         ),
       ),

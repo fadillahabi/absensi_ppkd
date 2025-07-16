@@ -53,7 +53,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
       setState(() {
         _batchOptions = batches;
         _trainingOptions = trainings;
-        // Pastikan trainingId yang terpilih masih valid setelah data diperbarui
         if (trainingId != null &&
             !_trainingOptions.any((t) => t.id == trainingId)) {
           trainingId = null;
@@ -63,7 +62,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Gagal memuat data batch/training. Coba lagi nanti.'),
+          content: Text('Gagal memuat data batch/training.'),
           backgroundColor: Colors.red,
         ),
       );
@@ -73,8 +72,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Future<void> _pickImage() async {
     final pickedFile = await ImagePicker().pickImage(
       source: ImageSource.gallery,
-      imageQuality:
-          50, // Kurangi kualitas gambar untuk pengiriman yang lebih cepat
+      imageQuality: 50,
     );
     if (pickedFile != null) {
       final bytes = await pickedFile.readAsBytes();
@@ -85,35 +83,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Future<void> _register() async {
-    if (!_formKey.currentState!.validate()) {
-      return; // Stop if form is not valid
-    }
+    if (!_formKey.currentState!.validate()) return;
 
     final name = _nameController.text.trim();
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
-    if (batchId == null) {
+    if (batchId == null || trainingId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Harap pilih Batch terlebih dahulu"),
-          backgroundColor: Colors.orange, // Warna peringatan
+        SnackBar(
+          content: Text(
+            batchId == null
+                ? "Harap pilih Batch terlebih dahulu"
+                : "Harap pilih Training terlebih dahulu",
+          ),
+          backgroundColor: Colors.orange,
         ),
       );
       return;
     }
 
-    if (trainingId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Harap pilih Training terlebih dahulu"),
-          backgroundColor: Colors.orange, // Warna peringatan
-        ),
-      );
-      return;
-    }
-
-    if (!mounted) return;
     setState(() => _isLoading = true);
 
     try {
@@ -122,7 +111,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         email: email,
         password: password,
         jenisKelamin: selectedGender ?? 'L',
-        profilePhoto: profilePhotoBase64 ?? "", // Kirim string kosong jika null
+        profilePhoto: profilePhotoBase64 ?? "",
         batchId: batchId!,
         trainingId: trainingId!,
       );
@@ -143,19 +132,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
             ],
           ),
-          backgroundColor: Colors.green[600],
+          backgroundColor: Colors.green,
           behavior: SnackBarBehavior.floating,
           margin: const EdgeInsets.all(16),
-          duration: const Duration(seconds: 2),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
         ),
       );
 
-      // Tunggu sejenak sebelum navigasi agar animasi snackbar terlihat
       await Future.delayed(const Duration(milliseconds: 1000));
-
       if (!mounted) return;
       Navigator.pushReplacement(
         context,
@@ -166,22 +152,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            "Gagal registrasi: ${e.toString().replaceFirst('Exception: ', '')}", // Hapus 'Exception: '
+            "Gagal registrasi: ${e.toString().replaceFirst('Exception: ', '')}",
             style: const TextStyle(color: Colors.white),
           ),
-          backgroundColor: Colors.red[600],
+          backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
           margin: const EdgeInsets.all(16),
-          duration: const Duration(seconds: 3),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
         ),
       );
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -195,259 +178,215 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    final isSmall = width < 360;
+
     return Scaffold(
       body: SafeArea(
         child: Container(
-          // Latar belakang gradien yang lebih lembut
           decoration: BoxDecoration(
             gradient: LinearGradient(
+              colors: [
+                Colors.white,
+                AppColor.purpleMain.withOpacity(0.1),
+                AppColor.purpleMain.withOpacity(0.3),
+              ],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [
-                Colors.white, // Mulai dari putih
-                AppColor.purpleMain.withOpacity(0.1), // Ungu sangat muda
-                AppColor.purpleMain.withOpacity(
-                  0.3,
-                ), // Ungu sedikit lebih terlihat
-              ],
-              stops: const [0.0, 0.5, 1.0], // Kontrol transisi gradien
             ),
           ),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              return SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24, // Padding horizontal yang konsisten
-                  vertical: 32, // Padding vertikal lebih besar
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 32),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: width > 600 ? 480 : double.infinity,
                 ),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(
-                      maxWidth: 500,
-                    ), // Lebar maksimum untuk form
-                    child: Container(
-                      // Ini adalah Container/Card untuk form registrasi
-                      padding: const EdgeInsets.all(
-                        28,
-                      ), // Padding internal lebih besar
-                      decoration: BoxDecoration(
-                        color:
-                            Colors
-                                .white, // Latar belakang putih untuk kartu form
-                        borderRadius: BorderRadius.circular(
-                          24,
-                        ), // Sudut lebih membulat
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColor.purpleMain.withOpacity(
-                              0.15,
-                            ), // Bayangan ungu yang lembut
-                            blurRadius: 20,
-                            spreadRadius: 2,
-                            offset: const Offset(0, 10),
+                child: Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColor.purpleMain.withOpacity(0.15),
+                        blurRadius: 20,
+                        spreadRadius: 2,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 16),
+                        Text(
+                          "Daftar Akun",
+                          style: TextStyle(
+                            fontSize: isSmall ? 24 : 32,
+                            fontWeight: FontWeight.bold,
+                            color: AppColor.purpleMain,
                           ),
-                        ],
-                      ),
-                      child: Form(
-                        key: _formKey,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            const SizedBox(height: 16), // Jarak atas
-                            // Judul "Register"
-                            Text(
-                              "Daftar Akun", // Pesan yang lebih ramah
-                              style: TextStyle(
-                                fontSize: 34,
-                                fontWeight: FontWeight.bold,
-                                color: AppColor.purpleMain, // Warna ungu utama
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            // Subtitle "Buat akun baru untuk melanjutkan"
-                            Text(
-                              "Bergabunglah dengan kami sekarang!", // Pesan yang lebih menarik
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.grey.shade700,
-                              ),
-                            ),
-                            const SizedBox(height: 32),
-
-                            // Upload Foto Profil
-                            GestureDetector(
-                              onTap: _pickImage,
-                              child: CircleAvatar(
-                                radius: 50, // Ukuran avatar lebih besar
-                                backgroundColor: AppColor.purpleMain
-                                    .withOpacity(
-                                      0.1,
-                                    ), // Latar belakang abu-abu terang
-                                backgroundImage:
-                                    profilePhotoBase64 != null
-                                        ? MemoryImage(
-                                          base64Decode(
-                                            profilePhotoBase64!.split(',').last,
-                                          ),
-                                        )
-                                        : null,
-                                child:
-                                    profilePhotoBase64 == null
-                                        ? Icon(
-                                          Icons.camera_alt,
-                                          size: 32, // Ukuran ikon lebih besar
-                                          color:
-                                              AppColor
-                                                  .purpleMain, // Warna ikon ungu
-                                        )
-                                        : null,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              "Ketuk untuk unggah foto (opsional)",
-                              style: TextStyle(
-                                color: Colors.grey.shade600,
-                                fontSize: 13,
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-
-                            // Nama Lengkap
-                            CustomInputField(
-                              hintText: 'Nama Lengkap',
-                              icon:
-                                  Icons
-                                      .person_outline, // Ikon outline lebih modern
-                              controller: _nameController,
-                              validator:
-                                  (value) =>
-                                      value == null || value.isEmpty
-                                          ? 'Nama tidak boleh kosong'
-                                          : null,
-                            ),
-                            const SizedBox(height: 16),
-
-                            // Email
-                            CustomInputField(
-                              hintText: 'Email',
-                              icon: Icons.email_outlined,
-                              controller: _emailController,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Email tidak boleh kosong';
-                                }
-                                if (!value.contains('@') ||
-                                    !value.contains('.')) {
-                                  return 'Format email tidak valid';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 16),
-
-                            // Password
-                            CustomPasswordField(
-                              controller: _passwordController,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Password tidak boleh kosong';
-                                }
-                                if (value.length < 6) {
-                                  return 'Password minimal 6 karakter';
-                                }
-                                return null;
-                              },
-                            ),
-                            // const SizedBox(height: 16),
-
-                            // Gender Selector
-                            GenderSelector(
-                              selectedGender: selectedGender,
-                              onChanged:
-                                  (val) => setState(() => selectedGender = val),
-                            ),
-                            const SizedBox(height: 16),
-
-                            // Batch Dropdown
-                            BatchDropdown(
-                              batchOptions: _batchOptions,
-                              selectedValue: batchId,
-                              onChanged: (val) => setState(() => batchId = val),
-                            ),
-                            const SizedBox(height: 16),
-
-                            // Training Dropdown
-                            TrainingDropdown(
-                              trainingOptions: _trainingOptions,
-                              selectedValue: trainingId,
-                              onChanged:
-                                  (val) => setState(() => trainingId = val),
-                            ),
-                            const SizedBox(height: 24),
-
-                            // Tombol Daftar
-                            MainButton(
-                              text:
-                                  _isLoading
-                                      ? 'Mendaftar...'
-                                      : "Daftar Sekarang",
-                              isLoading: _isLoading,
-                              onPressed:
-                                  _isLoading
-                                      ? null // Nonaktifkan tombol saat loading
-                                      : () {
-                                        if (_formKey.currentState!.validate()) {
-                                          _register();
-                                        }
-                                      },
-                              backgroundColor:
-                                  AppColor.purpleMain, // Warna ungu utama
-                            ),
-                            const SizedBox(height: 24),
-
-                            // Link ke Login
-                            RichText(
-                              text: TextSpan(
-                                text: 'Sudah punya akun? ',
-                                style: TextStyle(
-                                  color: Colors.grey.shade700,
-                                  fontSize: 15,
-                                ),
-                                children: [
-                                  TextSpan(
-                                    text: 'Masuk Sekarang',
-                                    style: TextStyle(
-                                      color:
-                                          AppColor
-                                              .purpleMain, // Warna ungu utama
-                                      fontWeight: FontWeight.bold,
-                                      decoration: TextDecoration.underline,
-                                    ),
-                                    recognizer:
-                                        TapGestureRecognizer()
-                                          ..onTap = () {
-                                            Navigator.pushReplacement(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder:
-                                                    (_) => const LoginScreen(),
-                                              ),
-                                            );
-                                          },
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 16), // Jarak bawah
-                          ],
                         ),
-                      ),
+                        const SizedBox(height: 8),
+                        Text(
+                          "Bergabunglah dengan kami sekarang!",
+                          style: TextStyle(
+                            fontSize: isSmall ? 13 : 16,
+                            color: Colors.grey.shade700,
+                          ),
+                        ),
+                        const SizedBox(height: 28),
+
+                        GestureDetector(
+                          onTap: _pickImage,
+                          child: CircleAvatar(
+                            radius: isSmall ? 40 : 50,
+                            backgroundColor: AppColor.purpleMain.withOpacity(
+                              0.1,
+                            ),
+                            backgroundImage:
+                                profilePhotoBase64 != null
+                                    ? MemoryImage(
+                                      base64Decode(
+                                        profilePhotoBase64!.split(',').last,
+                                      ),
+                                    )
+                                    : null,
+                            child:
+                                profilePhotoBase64 == null
+                                    ? Icon(
+                                      Icons.camera_alt,
+                                      size: isSmall ? 24 : 32,
+                                      color: AppColor.purpleMain,
+                                    )
+                                    : null,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          "Ketuk untuk unggah foto (opsional)",
+                          style: TextStyle(
+                            color: Colors.grey.shade600,
+                            fontSize: isSmall ? 11 : 13,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+
+                        CustomInputField(
+                          hintText: 'Nama Lengkap',
+                          icon: Icons.person_outline,
+                          controller: _nameController,
+                          validator:
+                              (value) =>
+                                  value == null || value.isEmpty
+                                      ? 'Nama tidak boleh kosong'
+                                      : null,
+                        ),
+                        const SizedBox(height: 16),
+
+                        CustomInputField(
+                          hintText: 'Email',
+                          icon: Icons.email_outlined,
+                          controller: _emailController,
+                          validator: (value) {
+                            if (value == null || value.isEmpty)
+                              return 'Email tidak boleh kosong';
+                            if (!value.contains('@') || !value.contains('.'))
+                              return 'Format email tidak valid';
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 16),
+
+                        CustomPasswordField(
+                          controller: _passwordController,
+                          validator: (value) {
+                            if (value == null || value.isEmpty)
+                              return 'Password tidak boleh kosong';
+                            if (value.length < 6)
+                              return 'Password minimal 6 karakter';
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 16),
+
+                        GenderSelector(
+                          selectedGender: selectedGender,
+                          onChanged:
+                              (val) => setState(() => selectedGender = val),
+                        ),
+                        const SizedBox(height: 16),
+
+                        BatchDropdown(
+                          batchOptions: _batchOptions,
+                          selectedValue: batchId,
+                          onChanged: (val) => setState(() => batchId = val),
+                        ),
+                        const SizedBox(height: 16),
+
+                        TrainingDropdown(
+                          trainingOptions: _trainingOptions,
+                          selectedValue: trainingId,
+                          onChanged: (val) => setState(() => trainingId = val),
+                        ),
+                        const SizedBox(height: 24),
+
+                        MainButton(
+                          text: _isLoading ? 'Mendaftar...' : "Daftar Sekarang",
+                          isLoading: _isLoading,
+                          onPressed: _isLoading ? null : () => _register(),
+                        ),
+                        const SizedBox(height: 24),
+
+                        RichText(
+                          text: TextSpan(
+                            text: 'Sudah punya akun? ',
+                            style: TextStyle(
+                              color: Colors.grey.shade700,
+                              fontSize: 15,
+                            ),
+                            children: [
+                              TextSpan(
+                                text: 'Masuk Sekarang',
+                                style: TextStyle(
+                                  color: AppColor.purpleMain,
+                                  fontWeight: FontWeight.bold,
+                                  decoration: TextDecoration.underline,
+                                ),
+                                recognizer:
+                                    TapGestureRecognizer()
+                                      ..onTap = () {
+                                        Navigator.pushReplacement(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => const LoginScreen(),
+                                          ),
+                                        );
+                                      },
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 20.0),
+                          child: Text(
+                            '© 2025 Fadillah Abi Prayogo. All Rights Reserved.',
+                            style: TextStyle(
+                              color: Colors.grey.shade600,
+                              fontSize: 12,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
-              );
-            },
+              ),
+            ),
           ),
         ),
       ),

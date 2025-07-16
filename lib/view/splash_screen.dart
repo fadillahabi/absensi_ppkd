@@ -38,7 +38,6 @@ class _SplashScreenState extends State<SplashScreen>
     final token = await PreferencesOTI.getToken();
 
     if (token != null && token.isNotEmpty) {
-      // ✅ Ganti ke BottomNav dengan index 0 (Home)
       Navigator.pushNamedAndRemoveUntil(
         context,
         CustomButtonNavBar.id,
@@ -65,11 +64,29 @@ class _SplashScreenState extends State<SplashScreen>
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      body: Center(
-        child: FadeTransition(
-          opacity: _fadeAnimation,
-          child: Image.asset('assets/images/logo.png', width: size.width * 1),
-        ),
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Expanded(
+            child: Center(
+              child: FadeTransition(
+                opacity: _fadeAnimation,
+                child: Image.asset(
+                  'assets/images/logo.png',
+                  width: size.width * 0.7,
+                ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 20.0),
+            child: Text(
+              '© 2025 Fadillah Abi Prayogo. All Rights Reserved.',
+              style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ],
       ),
     );
   }

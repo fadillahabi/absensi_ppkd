@@ -10,6 +10,7 @@ import 'package:ppkd_flutter/constant/app_color.dart';
 import 'package:ppkd_flutter/helper/shared_preference.dart';
 import 'package:ppkd_flutter/models/login_model.dart';
 import 'package:ppkd_flutter/models/stat_absen_model.dart';
+import 'package:ppkd_flutter/models/today_absen_model.dart';
 import 'package:ppkd_flutter/services/absen_services.dart';
 import 'package:ppkd_flutter/services/auth_services.dart';
 import 'package:ppkd_flutter/view/attendance_screen/chechkout_screen.dart';
@@ -33,6 +34,7 @@ class _HomeScreenState extends State<HomeScreen> {
   DateTime? checkOutTime;
   String currentAddress = "Memuat lokasi...";
   bool isLoadingStats = false;
+  TodayAbsenData? todayAbsenData;
 
   // Removed attendanceHistory and izinList
   StatDataAbsen? absenStats; // New: to hold attendance statistics
@@ -44,7 +46,8 @@ class _HomeScreenState extends State<HomeScreen> {
     initializeDateFormatting('id_ID');
     _startClock();
     getCurrentLocation();
-    fetchAbsenStatistics(); // New: Fetch attendance statistics
+    fetchAbsenStatistics();
+    fetchTodayAttendance();
   }
 
   void _startClock() {
@@ -61,12 +64,37 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  // Removed fetchIzinList and fetchAttendanceHistory
+  Future<void> fetchTodayAttendance() async {
+    final token = await PreferencesOTI.getToken();
+    if (token == null) return;
+
+    try {
+      final response = await AbsenServices.fetchTodayAbsen(token);
+      if (response.data != null) {
+        final data = response.data!;
+        setState(() {
+          todayAbsenData = data;
+
+          // Konversi string waktu menjadi DateTime
+          if (data.checkInTime != null && data.checkInTime!.isNotEmpty) {
+            checkInTime = DateFormat('HH:mm').parse(data.checkInTime!);
+          }
+
+          if (data.checkOutTime != null && data.checkOutTime!.isNotEmpty) {
+            checkOutTime = DateFormat('HH:mm').parse(data.checkOutTime!);
+          }
+        });
+      }
+    } catch (e) {
+      print("Gagal memuat absen hari ini: $e");
+    }
+  }
 
   Future<void> _handleRefresh() async {
     await fetchUserProfile();
     await getCurrentLocation();
-    await fetchAbsenStatistics(); // Refresh attendance statistics
+    await fetchAbsenStatistics();
+    await fetchTodayAttendance();
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -335,6 +363,14 @@ class _HomeScreenState extends State<HomeScreen> {
               _buildAbsenStatsCard(),
 
               const SizedBox(height: 80),
+              Padding(
+                padding: const EdgeInsets.only(top: 32, bottom: 16),
+                child: Text(
+                  '© 2025 Fadillah Abi Prayogo. All Rights Reserved.',
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                  textAlign: TextAlign.center,
+                ),
+              ),
             ],
           ),
         ),
@@ -433,14 +469,18 @@ class _HomeScreenState extends State<HomeScreen> {
                                     CheckinScreen.id,
                                   )
                                   as Map<String, dynamic>?;
+
                           if (result != null && result['checkInTime'] != null) {
                             setState(() {
                               checkInTime = DateFormat(
                                 'HH:mm',
                               ).parse(result['checkInTime']);
                             });
-                            getCurrentLocation();
-                            fetchAbsenStatistics(); // Refresh stats after check-in
+                            await getCurrentLocation();
+                            await Future.delayed(
+                              const Duration(seconds: 1),
+                            ); // Tambah delay
+                            await fetchAbsenStatistics(); // Refresh setelah delay
                           }
                         }
                         : null,
@@ -457,6 +497,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     CheckOutScreen.id,
                                   )
                                   as Map<String, dynamic>?;
+
                           if (result != null &&
                               result['checkOutTime'] != null) {
                             setState(() {
@@ -464,8 +505,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                 'HH:mm',
                               ).parse(result['checkOutTime']);
                             });
-                            getCurrentLocation();
-                            fetchAbsenStatistics(); // Refresh stats after check-out
+                            await getCurrentLocation();
+                            await Future.delayed(
+                              const Duration(seconds: 1),
+                            ); // Tambah delay
+                            await fetchAbsenStatistics(); // Refresh setelah delay
                           }
                         }
                         : null,

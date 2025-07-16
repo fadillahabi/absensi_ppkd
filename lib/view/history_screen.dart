@@ -1,3 +1,5 @@
+// history_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
@@ -11,11 +13,11 @@ class HistoryScreen extends StatefulWidget {
   static const String id = "/history_screen";
 
   @override
-  State<HistoryScreen> createState() => _HistoryScreenState();
+  State<HistoryScreen> createState() => HistoryScreenState();
 }
 
-class _HistoryScreenState extends State<HistoryScreen>
-    with TickerProviderStateMixin {
+class HistoryScreenState extends State<HistoryScreen>
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   String selectedMonth = DateFormat('MMMM', 'id_ID').format(DateTime.now());
   late AnimationController _fadeController;
   late AnimationController _slideController;
@@ -43,6 +45,7 @@ class _HistoryScreenState extends State<HistoryScreen>
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
@@ -73,12 +76,24 @@ class _HistoryScreenState extends State<HistoryScreen>
   void dispose() {
     _fadeController.dispose();
     _slideController.dispose();
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      fetchHistory();
+    }
   }
 
   Future<void> fetchHistory() async {
     final token = await PreferencesOTI.getToken();
     if (token == null) return;
+
+    setState(() {
+      isLoading = true;
+    });
 
     try {
       final data = await AbsenServices.fetchAbsenHistory(token);
@@ -86,14 +101,128 @@ class _HistoryScreenState extends State<HistoryScreen>
         historyData = data;
         isLoading = false;
       });
-      _fadeController.forward();
-      _slideController.forward();
+      _fadeController.forward(from: 0.0);
+      _slideController.forward(from: 0.0);
     } catch (e) {
       debugPrint('Gagal memuat history absen: $e');
       setState(() {
         isLoading = false;
       });
     }
+  }
+
+  void _showAttendanceDetailDialog(HistoryAbsenData data) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            "Detail Kehadiran",
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: AppColor.purpleMain,
+            ),
+          ),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                _buildDetailRow(
+                  "Tanggal",
+                  DateFormat(
+                    'dd MMMM yyyy',
+                    'id_ID',
+                  ).format(data.attendanceDate),
+                ),
+                const Divider(),
+                if (data.status == Status.MASUK) ...[
+                  _buildDetailRow(
+                    "Clock In",
+                    data.checkInTime ?? 'N/A',
+                    icon: Icons.login,
+                  ),
+                  _buildDetailRow(
+                    "Lokasi Masuk",
+                    data.checkInAddress ?? 'N/A',
+                    icon: Icons.location_on,
+                  ),
+                  _buildDetailRow(
+                    "Clock Out",
+                    data.checkOutTime ?? 'N/A',
+                    icon: Icons.logout,
+                  ),
+                  _buildDetailRow(
+                    "Lokasi Keluar",
+                    data.checkOutAddress ?? 'N/A',
+                    icon: Icons.location_on,
+                  ),
+                ] else if (data.status == Status.IZIN) ...[
+                  _buildDetailRow(
+                    "Status",
+                    "Izin",
+                    icon: Icons.info_outline,
+                    textColor: Colors.orange,
+                  ),
+                  _buildDetailRow(
+                    "Alasan Izin",
+                    data.alasanIzin ?? 'Tidak ada alasan',
+                    icon: Icons.sticky_note_2_outlined,
+                  ),
+                ],
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              child: Text(
+                "Tutup",
+                style: TextStyle(color: AppColor.purpleMain),
+              ),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildDetailRow(
+    String label,
+    String value, {
+    IconData? icon,
+    Color? textColor,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 20, color: Colors.grey[600]),
+            const SizedBox(width: 10),
+          ],
+          Expanded(
+            flex: 2,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Colors.grey[700],
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: Text(
+              value,
+              style: TextStyle(
+                color: textColor ?? Colors.black87,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -116,7 +245,6 @@ class _HistoryScreenState extends State<HistoryScreen>
           slivers: [
             SliverAppBar(
               expandedHeight: 160,
-              floating: false,
               pinned: true,
               backgroundColor: Colors.transparent,
               elevation: 0,
@@ -169,27 +297,42 @@ class _HistoryScreenState extends State<HistoryScreen>
               ),
             ),
             SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  if (isLoading) return _buildShimmerCard();
-                  if (filteredData.isEmpty) return _buildEmptyState();
+              delegate: SliverChildBuilderDelegate((context, index) {
+                if (isLoading) return _buildShimmerCard();
+                if (index == filteredData.length) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 32),
+                    child: Center(
+                      child: Text(
+                        '© 2025 Fadillah Abi Prayogo. All Rights Reserved.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade500,
+                        ),
+                      ),
+                    ),
+                  );
+                }
+                if (filteredData.isEmpty) return _buildEmptyState();
 
-                  final item = filteredData[index];
-                  final day = DateFormat(
-                    'EEEE',
-                    'id_ID',
-                  ).format(item.attendanceDate);
-                  final date = DateFormat('dd').format(item.attendanceDate);
+                final item = filteredData[index];
+                final day = DateFormat(
+                  'EEEE',
+                  'id_ID',
+                ).format(item.attendanceDate);
+                final date = DateFormat('dd').format(item.attendanceDate);
 
-                  return SlideTransition(
-                    position: _slideAnimation,
-                    child: FadeTransition(
-                      opacity: _fadeAnimation,
+                return SlideTransition(
+                  position: _slideAnimation,
+                  child: FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: GestureDetector(
+                      onTap: () => _showAttendanceDetailDialog(item),
                       child: Padding(
                         padding: EdgeInsets.only(
                           left: 20,
                           right: 20,
-                          bottom: index == filteredData.length - 1 ? 100 : 16,
+                          bottom: index == filteredData.length - 1 ? 16 : 16,
                         ),
                         child:
                             item.status == Status.IZIN
@@ -206,13 +349,9 @@ class _HistoryScreenState extends State<HistoryScreen>
                                 ),
                       ),
                     ),
-                  );
-                },
-                childCount:
-                    isLoading
-                        ? 5
-                        : (filteredData.isEmpty ? 1 : filteredData.length),
-              ),
+                  ),
+                );
+              }, childCount: isLoading ? 5 : filteredData.length + 1),
             ),
           ],
         ),
@@ -220,8 +359,7 @@ class _HistoryScreenState extends State<HistoryScreen>
     );
   }
 
-  // ------------------ UI Helpers ------------------------
-
+  // -- UI components di bawah sini sama seperti sebelumnya, tanpa perubahan signifikan
   Widget _buildHeader() {
     return Container(
       decoration: BoxDecoration(
@@ -263,16 +401,14 @@ class _HistoryScreenState extends State<HistoryScreen>
     );
   }
 
-  Widget _circle(double size, double opacity) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: Colors.white.withOpacity(opacity),
-      ),
-    );
-  }
+  Widget _circle(double size, double opacity) => Container(
+    width: size,
+    height: size,
+    decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      color: Colors.white.withOpacity(opacity),
+    ),
+  );
 
   Widget _buildMonthSelector() {
     return Container(
@@ -582,6 +718,7 @@ class _HistoryScreenState extends State<HistoryScreen>
           const SizedBox(width: 20),
           Expanded(
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
                   height: 16,
