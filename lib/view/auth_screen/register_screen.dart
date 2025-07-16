@@ -232,6 +232,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         const SizedBox(height: 8),
                         Text(
                           "Bergabunglah dengan kami sekarang!",
+                          textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: isSmall ? 13 : 16,
                             color: Colors.grey.shade700,
