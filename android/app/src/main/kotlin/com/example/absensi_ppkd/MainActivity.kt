@@ -1,4 +1,4 @@
-package com.example.absensi_ppkd
+package com.one_tap_in
 
 import io.flutter.embedding.android.FlutterActivity
 
